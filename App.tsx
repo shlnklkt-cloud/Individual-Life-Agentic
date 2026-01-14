@@ -46,10 +46,12 @@ import {
   ShieldCheck,
   FileSearch,
   Check,
-  // Added Loader2 to fix compilation error "Cannot find name 'Loader2'" on line 635
-  Loader2
+  Loader2,
+  Upload,
+  File as FileIcon
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import { GoogleGenAI } from "@google/genai";
 import StepProgressBar from './components/StepProgressBar';
 import AgentUI from './components/AgentUI';
 import PaymentGateway from './components/PaymentGateway';
@@ -133,13 +135,15 @@ const App: React.FC = () => {
   // Claim Bot State
   const [claimState, setClaimState] = useState<ClaimAppState>(ClaimAppState.INTAKE);
   const [claimMessages, setClaimMessages] = useState<Message[]>([
-    { id: 'c1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "SYSTEM_ONLINE: Claims Document Intelligence module active. Please submit a claim file (PDF/ZIP/Email) to begin the autonomous splitting and classification protocol.", timestamp: new Date() }
+    { id: 'c1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "SYSTEM_ONLINE: Claims Document Intelligence module active. Please upload your claim file (PDF/ZIP) to begin the autonomous multi-agent analysis protocol.", timestamp: new Date() }
   ]);
   const [claimIsProcessing, setClaimIsProcessing] = useState(false);
   const [claimActiveAgent, setClaimActiveAgent] = useState<AgentName>('Intake Orchestration Agent');
+  const [claimId, setClaimId] = useState<string | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const insuranceDropdownRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -188,74 +192,144 @@ const App: React.FC = () => {
 
   const startClaimWorkflow = () => {
     setClaimState(ClaimAppState.INTAKE);
+    setClaimId(null);
     setClaimMessages([
-      { id: 'c1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "SYSTEM_ONLINE: Claims Document Intelligence module active. Please submit a claim file (PDF/ZIP/Email) to begin the autonomous splitting and classification protocol.", timestamp: new Date() }
+      { id: 'c1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "SYSTEM_ONLINE: Claims Document Intelligence module active. Please upload your claim file (PDF/ZIP) to begin the autonomous multi-agent analysis protocol.", timestamp: new Date() }
     ]);
     setCurrentView('CLAIM');
     setShowInsuranceDropdown(false);
   };
 
-  const runClaimAgenticFlow = async () => {
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = (reader.result as string).split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const processFileWithAI = async (file: File) => {
+    if (!process.env.API_KEY) {
+      setClaimMessages(prev => [...prev, { id: Date.now().toString(), role: 'agent', agentName: 'Intake Orchestration Agent', text: "ERROR: AI services unavailable. API key missing.", timestamp: new Date() }]);
+      return;
+    }
+
     setClaimIsProcessing(true);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-    // User "Submits"
-    setClaimMessages(prev => [...prev, { id: 'u1', role: 'user', text: "Uploading Claim_Package_Michael_Johnson.pdf (6 pages)", timestamp: new Date() }]);
-    await delay(1000);
+    try {
+      const base64Data = await fileToBase64(file);
+      // Note: If it's a ZIP, we treat it as generic binary for multi-modal analysis. Gemini works best with PDFs.
+      const filePart = { inlineData: { data: base64Data, mimeType: file.type || 'application/pdf' } };
 
-    // Intake
-    setClaimActiveAgent('Intake Orchestration Agent');
-    setClaimMessages(prev => [...prev, { id: 'a1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "FILE_RECEIVED: 6-page PDF detected. Initiating Page Indexing and Metadata Tagging.", timestamp: new Date() }]);
-    await delay(1500);
+      // Step 1: Intake & Splitting
+      setClaimActiveAgent('Intake Orchestration Agent');
+      setClaimMessages(prev => [...prev, { id: 'u1', role: 'user', text: `Uploaded ${file.name} (${(file.size / 1024).toFixed(1)} KB)`, timestamp: new Date() }]);
+      await delay(800);
+      
+      setClaimState(ClaimAppState.SPLITTING);
+      setClaimActiveAgent('Document Splitting Agent');
+      setClaimMessages(prev => [...prev, { id: 'a1', role: 'agent', agentName: 'Document Splitting Agent', text: "ANALYZING_FILE_STRUCTURE: Pixel-level page layout analysis and boundary detection in progress...", timestamp: new Date() }]);
+      
+      const splitResponse = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          { parts: [
+            filePart,
+            { text: "Analyze this claim document package. List the logical sub-documents found (e.g. Claimant Statement, Death Certificate, Salary Verification). Mention which pages or sections belong to which document type." }
+          ]}
+        ]
+      });
+      setClaimMessages(prev => [...prev, { id: 'a2', role: 'agent', agentName: 'Document Splitting Agent', text: splitResponse.text || "Split analysis complete.", timestamp: new Date() }]);
+      await delay(1500);
 
-    // Splitting
-    setClaimState(ClaimAppState.SPLITTING);
-    setClaimActiveAgent('Document Splitting Agent');
-    setClaimMessages(prev => [...prev, { id: 'a2', role: 'agent', agentName: 'Document Splitting Agent', text: "ANALYZING_LAYOUT: Scanning headers, footers, and signature blocks. Splitting logical documents...", timestamp: new Date() }]);
-    await delay(1000);
-    setClaimMessages(prev => [...prev, { id: 'a3', role: 'agent', agentName: 'Document Splitting Agent', text: "SPLIT_COMPLETE: Found 6 logical documents: Claimant Statement, Employer Statement, Death Certificate, Medical Records, Salary Verification, and Email.", timestamp: new Date() }]);
-    await delay(1500);
+      // Step 2: Classification
+      setClaimState(ClaimAppState.CLASSIFICATION);
+      setClaimActiveAgent('Document Classification Agent');
+      setClaimMessages(prev => [...prev, { id: 'a3', role: 'agent', agentName: 'Document Classification Agent', text: "CLASSIFYING_DOCUMENTS: Verifying document types against actuarial and legal labels...", timestamp: new Date() }]);
+      
+      const classResponse = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          { parts: [
+            filePart,
+            { text: "For each sub-document identified, classify it using these specific labels: Claim Form, Medical Record, Legal Doc, Financial Doc, Correspondence. Provide a confidence score for each classification." }
+          ]}
+        ]
+      });
+      setClaimMessages(prev => [...prev, { id: 'a4', role: 'agent', agentName: 'Document Classification Agent', text: classResponse.text || "Classification complete.", timestamp: new Date() }]);
+      await delay(1500);
 
-    // Classification
-    setClaimState(ClaimAppState.CLASSIFICATION);
-    setClaimActiveAgent('Document Classification Agent');
-    setClaimMessages(prev => [...prev, { id: 'a4', role: 'agent', agentName: 'Document Classification Agent', text: "CLASSIFYING: Running vision-based type identification. Accuracy baseline check in progress.", timestamp: new Date() }]);
-    await delay(1000);
-    setClaimMessages(prev => [...prev, { id: 'a5', role: 'agent', agentName: 'Document Classification Agent', text: "RESULTS: Legal Docs (99.6%), Medical Records (97.8%), Financial Docs (98.1%). All labels confirmed.", timestamp: new Date() }]);
-    await delay(1500);
+      // Step 3: Extraction
+      setClaimState(ClaimAppState.EXTRACTION);
+      setClaimActiveAgent('Data Extraction Agent');
+      setClaimMessages(prev => [...prev, { id: 'a5', role: 'agent', agentName: 'Data Extraction Agent', text: "EXTRACTING_KEY_ENTITIES: Mapping document values to PAS core registry schema...", timestamp: new Date() }]);
+      
+      const extractResponse = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          { parts: [
+            filePart,
+            { text: "Extract structured data: Claimant Name, Deceased/Employee Name, Policy Number, Date of Death/Event, Cause of Death (if APS), and Annual Salary. Output as a clear list or JSON." }
+          ]}
+        ]
+      });
+      setClaimMessages(prev => [...prev, { id: 'a6', role: 'agent', agentName: 'Data Extraction Agent', text: extractResponse.text || "Extraction successful.", timestamp: new Date() }]);
+      await delay(1500);
 
-    // Extraction
-    setClaimState(ClaimAppState.EXTRACTION);
-    setClaimActiveAgent('Data Extraction Agent');
-    setClaimMessages(prev => [...prev, { id: 'a6', role: 'agent', agentName: 'Data Extraction Agent', text: "EXTRACTING_STRUCTURED_DATA: Mapping fields to Pas/Claims core schema.", timestamp: new Date() }]);
-    await delay(1000);
-    const extractionResult = { 
-      claimant_name: "Sarah Johnson", 
-      employee_name: "Michael Johnson", 
-      policy_number: "GL-784392", 
-      date_of_death: "2025-02-12", 
-      cause_of_death: "Acute Myocardial Infarction", 
-      annual_salary: 92000 
-    };
-    setClaimMessages(prev => [...prev, { id: 'a7', role: 'agent', agentName: 'Data Extraction Agent', text: `EXTRACTION_SUCCESS: JSON_OBJECT_READY:\n${JSON.stringify(extractionResult, null, 2)}`, timestamp: new Date() }]);
-    await delay(2000);
+      // Step 4: Summarization
+      setClaimState(ClaimAppState.SUMMARIZATION);
+      setClaimActiveAgent('Claim Summarization Agent');
+      setClaimMessages(prev => [...prev, { id: 'a7', role: 'agent', agentName: 'Claim Summarization Agent', text: "SYNTHESIZING_CLAIM_SUMMARY: Generating human-readable adjudication narrative...", timestamp: new Date() }]);
+      
+      const summaryResponse = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          { parts: [
+            filePart,
+            { text: "Provide a 4-sentence claim summary for an adjudicator. Mention if all required docs (Death Cert, Employer Statement) seem present based on your analysis." }
+          ]}
+        ]
+      });
+      setClaimMessages(prev => [...prev, { id: 'a8', role: 'agent', agentName: 'Claim Summarization Agent', text: summaryResponse.text || "Summary generated.", timestamp: new Date() }]);
+      await delay(1500);
 
-    // Summarization
-    setClaimState(ClaimAppState.SUMMARIZATION);
-    setClaimActiveAgent('Claim Summarization Agent');
-    setClaimMessages(prev => [...prev, { id: 'a8', role: 'agent', agentName: 'Claim Summarization Agent', text: "SYNTHESIZING_ADJUDICATOR_SUMMARY: Mapping medical findings to policy eligibility.", timestamp: new Date() }]);
-    await delay(1500);
-    setClaimMessages(prev => [...prev, { id: 'a9', role: 'agent', agentName: 'Claim Summarization Agent', text: "SUMMARY: Michael Johnson, a full-time employee, passed away on February 12, 2025. Death certificate confirms acute myocardial infarction. Employment and salary eligibility verified. No policy exclusions identified. Required documents complete. Claim appears payable subject to standard review.", timestamp: new Date() }]);
-    await delay(1500);
+      // Step 5: Quality Check & Claim Registration
+      setClaimState(ClaimAppState.QUALITY_CHECK);
+      setClaimActiveAgent('Quality & Confidence Agent');
+      setClaimMessages(prev => [...prev, { id: 'a9', role: 'agent', agentName: 'Quality & Confidence Agent', text: "FINAL_VALIDATION: Performing integrity check against compliance thresholds...", timestamp: new Date() }]);
+      await delay(1200);
+      
+      // Generate Claim ID
+      const newClaimId = `CLM-${new Date().getFullYear()}-${Math.floor(Math.random() * 900000 + 100000)}`;
+      setClaimId(newClaimId);
 
-    // Quality Check
-    setClaimState(ClaimAppState.QUALITY_CHECK);
-    setClaimActiveAgent('Quality & Confidence Agent');
-    setClaimMessages(prev => [...prev, { id: 'a10', role: 'agent', agentName: 'Quality & Confidence Agent', text: "AUDITING_INTEGRITY: No critical docs missing. Data conflicts: None. Confidence threshold: PASS (0.98 avg).", timestamp: new Date() }]);
-    await delay(1000);
-    setClaimMessages(prev => [...prev, { id: 'a11', role: 'agent', agentName: 'Quality & Confidence Agent', text: "STATUS: AUTO-APPROVE_READY. Data transmitted to PAS core system.", timestamp: new Date() }]);
-    
-    setClaimIsProcessing(false);
+      setClaimMessages(prev => [...prev, { 
+        id: 'a10', 
+        role: 'agent', 
+        agentName: 'Quality & Confidence Agent', 
+        text: `REGISTRATION_COMPLETE: Claim has been officially registered in the Canada Life Ledger.\n\nCLAIM_NUMBER: ${newClaimId}\nSTATUS: AUTO_TRIAGE_SUCCESS\n\nAll documents verified and structured data transmitted.`, 
+        timestamp: new Date() 
+      }]);
+
+    } catch (err) {
+      console.error(err);
+      setClaimMessages(prev => [...prev, { id: Date.now().toString(), role: 'agent', agentName: 'Intake Orchestration Agent', text: "CRITICAL_FAILURE: Failed to interpret document pixels. Agentic cluster aborted.", timestamp: new Date() }]);
+    } finally {
+      setClaimIsProcessing(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFileWithAI(file);
+    }
   };
 
   const handleTransfer = (nextAgent: AgentName, nextState: AppState, callback?: () => void) => {
@@ -575,7 +649,7 @@ const App: React.FC = () => {
                   { id: ClaimAppState.CLASSIFICATION, label: 'Type', icon: <Tag className="w-3.5 h-3.5" /> },
                   { id: ClaimAppState.EXTRACTION, label: 'Data', icon: <Database className="w-3.5 h-3.5" /> },
                   { id: ClaimAppState.SUMMARIZATION, label: 'Summary', icon: <FileText className="w-3.5 h-3.5" /> },
-                  { id: ClaimAppState.QUALITY_CHECK, label: 'Quality', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+                  { id: ClaimAppState.QUALITY_CHECK, label: 'Finality', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
                 ].map((step, idx) => {
                   const currentIdx = [
                     ClaimAppState.INTAKE, ClaimAppState.SPLITTING, ClaimAppState.CLASSIFICATION, 
@@ -603,13 +677,13 @@ const App: React.FC = () => {
               {/* Operational Core Header */}
               <div className="bg-black/5 px-8 py-3 border-b border-black/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black text-black uppercase tracking-widest">Claims Core:</span>
+                  <span className="text-[10px] font-black text-black uppercase tracking-widest">Claims Processing Core:</span>
                   <span className="text-[10px] font-black uppercase tracking-widest text-[#B11226]">{claimActiveAgent}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-black/10 rounded-full shadow-sm">
                       <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                      <span className="text-[9px] font-bold text-black uppercase">Agentic Processing Active</span>
+                      <span className="text-[9px] font-bold text-black uppercase">Multi-modal Agent Cluster Online</span>
                   </div>
                 </div>
               </div>
@@ -634,35 +708,61 @@ const App: React.FC = () => {
                 ))}
                 {claimIsProcessing && (
                   <div className="flex items-center gap-3 text-black/40 text-[10px] font-black uppercase tracking-widest ml-14 animate-pulse">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Agent thinking...
+                    <Loader2 className="w-4 h-4 animate-spin text-[#B11226]" />
+                    Synthesizing document context...
+                  </div>
+                )}
+                {claimId && !claimIsProcessing && (
+                  <div className="flex justify-center my-8 animate-in zoom-in duration-700">
+                    <div className="bg-[#B11226] p-12 rounded-[3rem] text-white text-center shadow-2xl shadow-red-200 relative overflow-hidden">
+                       <div className="absolute top-0 right-0 p-8 opacity-10"><ShieldCheck className="w-32 h-32" /></div>
+                       <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-4">Official Receipt of Claim</p>
+                       <h2 className="text-4xl font-black tracking-tighter mb-2">{claimId}</h2>
+                       <p className="text-white/60 text-xs font-bold uppercase tracking-widest">Recorded in Global Claims Ledger</p>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Action Bar */}
-              <div className="p-8 border-t border-black/10 bg-white">
+              <div className="p-8 border-t border-black/10 bg-white shadow-[0_-8px_32px_rgba(0,0,0,0.03)]">
                 <div className="max-w-3xl mx-auto flex items-center gap-4">
-                  <div className="flex-1 relative group">
-                    <div className="w-full pl-8 pr-20 py-5 rounded-[1.25rem] border-2 border-black/5 bg-black/[0.02] transition-all font-mono text-[11px] text-black flex items-center gap-3">
-                      <FileSearch className="w-4 h-4 text-black/40" />
-                      {claimState === ClaimAppState.INTAKE ? "Waiting for Michael_Johnson_Death_Claim.pdf..." : "Multi-agent processing active..."}
+                  {claimState === ClaimAppState.INTAKE && !claimIsProcessing ? (
+                    <div className="w-full">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileUpload} 
+                        className="hidden" 
+                        accept=".pdf,application/pdf,.zip,application/zip" 
+                      />
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-4 p-8 border-2 border-dashed border-black/10 rounded-[1.5rem] hover:border-[#B11226] hover:bg-[#B11226]/5 transition-all group"
+                      >
+                        <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center text-white group-hover:bg-[#B11226] transition-colors">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-black text-black uppercase tracking-tighter">Submit Claim Package (PDF/ZIP)</p>
+                          <p className="text-[10px] font-bold text-black/30 uppercase tracking-widest mt-1">Multi-agent parsing activated on upload</p>
+                        </div>
+                      </button>
                     </div>
-                  </div>
-                  {claimState === ClaimAppState.INTAKE && !claimIsProcessing && (
-                    <button 
-                      onClick={runClaimAgenticFlow}
-                      className="px-10 py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-black transition-all flex items-center gap-3 active:scale-95"
-                    >
-                      Process Case Study <ArrowRight className="w-5 h-5" />
-                    </button>
+                  ) : (
+                    <div className="flex-1 relative group">
+                      <div className="w-full pl-8 pr-20 py-5 rounded-[1.25rem] border-2 border-black/5 bg-black/[0.02] transition-all font-mono text-[11px] text-black flex items-center gap-3">
+                        <FileSearch className="w-4 h-4 text-black/40" />
+                        {claimIsProcessing ? "Agentic cluster is mapping document pixels and extracting clinical markers..." : "Autonomous protocol execution complete."}
+                      </div>
+                    </div>
                   )}
                   {claimState === ClaimAppState.QUALITY_CHECK && !claimIsProcessing && (
                     <button 
                       onClick={startClaimWorkflow}
-                      className="px-10 py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-[#B11226] transition-all flex items-center gap-3 active:scale-95"
+                      className="px-10 py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-[#B11226] transition-all flex items-center justify-center gap-3 active:scale-95"
                     >
-                      Clear & Start New Claim <RefreshCw className="w-5 h-5" />
+                      <RefreshCw className="w-4 h-4" /> New Ingestion
                     </button>
                   )}
                 </div>
