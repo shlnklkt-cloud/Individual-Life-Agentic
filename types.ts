@@ -7,6 +7,8 @@ export enum AppState {
   ISSUANCE = 'ISSUANCE'
 }
 
+export type MainView = 'LOGIN' | 'DASHBOARD' | 'POLICY' | 'CLAIM';
+
 export type AgentName = 
   | 'Orchestrator Agent'
   | 'Application Intake Agent'
