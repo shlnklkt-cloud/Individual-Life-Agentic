@@ -227,7 +227,7 @@ const App: React.FC = () => {
             </div>
             <div className="flex flex-col">
                 <span className="text-sm font-black text-white uppercase tracking-tighter">DiaGuard Intelligence</span>
-                <span className="text-[9px] font-bold text-white uppercase tracking-widest">Multi-Agent Underwriting Platform</span>
+                <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">Multi-Agent Underwriting</span>
             </div>
           </div>
           
@@ -238,14 +238,14 @@ const App: React.FC = () => {
                 {AGENT_REGISTRY[activeAgent].icon}
               </div>
               <div className="text-left leading-none">
-                <p className="text-[8px] font-black text-white uppercase tracking-widest">Active Core</p>
+                <p className="text-[8px] font-black text-white/60 uppercase tracking-widest">Active Core</p>
                 <p className="text-[10px] font-bold text-white mt-0.5">{activeAgent}</p>
               </div>
             </div>
           </div>
 
           <button onClick={() => window.location.reload()} className="p-2 hover:bg-white/10 rounded-xl transition-all group">
-            <PlusCircle className="w-5 h-5 text-white group-hover:text-white" />
+            <PlusCircle className="w-5 h-5 text-white/60 group-hover:text-white" />
           </button>
         </div>
       </header>
@@ -310,7 +310,7 @@ const App: React.FC = () => {
                         </div>
                         <div className="flex flex-col">
                            {m.role === 'agent' && <p className="text-[9px] font-black uppercase mb-1.5 text-black tracking-widest">{m.agentName || activeAgent}</p>}
-                           <div className={`p-5 rounded-2xl text-[13px] font-medium leading-relaxed shadow-sm ${m.role === 'agent' ? 'bg-black/5 text-black rounded-tl-none border border-black/5' : 'bg-black text-white rounded-tr-none'}`}>
+                           <div className={`p-5 rounded-2xl text-[13px] font-medium leading-relaxed shadow-sm ${m.role === 'agent' ? 'bg-black/5 text-black rounded-tl-none border border-black/5' : 'bg-[#B11226] text-white rounded-tr-none'}`}>
                              {m.text}
                            </div>
                            <span className="text-[8px] font-bold text-black uppercase mt-1 self-end">{m.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -349,7 +349,7 @@ const App: React.FC = () => {
                         </div>
                       </div>
                       <input type="range" min={currentStep.min} max={currentStep.max} step={currentStep.step} className="w-full h-1.5 bg-black/5 rounded-full appearance-none cursor-pointer accent-[#B11226]" value={currentStep.key === 'hba1c' ? userData.hba1c : userData.coverageAmount} onChange={(e) => setUserData({...userData, [currentStep.key]: parseFloat(e.target.value)})} />
-                      <button onClick={() => handleUserResponse(currentStep.key === 'hba1c' ? userData.hba1c : userData.coverageAmount, currentStep.key === 'hba1c' ? `${userData.hba1c}%` : `$${userData.coverageAmount.toLocaleString()}`)} className="w-full py-5 bg-black text-white rounded-[1.25rem] font-black uppercase tracking-widest shadow-2xl hover:bg-[#B11226] transition-all">Verify Magnitude</button>
+                      <button onClick={() => handleUserResponse(currentStep.key === 'hba1c' ? userData.hba1c : userData.coverageAmount, currentStep.key === 'hba1c' ? `${userData.hba1c}%` : `$${userData.coverageAmount.toLocaleString()}`)} className="w-full py-5 bg-[#B11226] text-white rounded-[1.25rem] font-black uppercase tracking-widest shadow-2xl hover:bg-black transition-all">Verify Magnitude</button>
                     </div>
                   ) : currentStep.type === 'multi-choice' ? (
                     <div className="space-y-6">
@@ -360,7 +360,7 @@ const App: React.FC = () => {
                           </button>
                         ))}
                       </div>
-                      <button onClick={() => handleUserResponse(userData.complications, userData.complications.join(', '))} className="w-full py-5 bg-black text-white rounded-[1.25rem] font-black uppercase tracking-widest shadow-2xl">Confirm Selection</button>
+                      <button onClick={() => handleUserResponse(userData.complications, userData.complications.join(', '))} className="w-full py-5 bg-[#B11226] text-white rounded-[1.25rem] font-black uppercase tracking-widest shadow-2xl">Confirm Selection</button>
                     </div>
                   ) : null}
                 </div>
@@ -383,7 +383,7 @@ const App: React.FC = () => {
               <AgentUI isProcessing={isProcessing} reasoning={aiReasoning} decisionText={decision?.reasoning || ""} riskScore={decision?.riskScore || 0} />
               {!isProcessing && (
                 <div className="mt-12 flex justify-center animate-in fade-in slide-in-from-bottom-6 duration-700">
-                   <button onClick={() => setState(AppState.QUOTE)} className="group px-14 py-5 bg-black text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] hover:bg-[#B11226] shadow-2xl transition-all flex items-center gap-4">Access Terms <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /></button>
+                   <button onClick={() => setState(AppState.QUOTE)} className="group px-14 py-5 bg-[#B11226] text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] hover:bg-black shadow-2xl transition-all flex items-center gap-4">Access Terms <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /></button>
                 </div>
               )}
             </div>
@@ -453,16 +453,16 @@ const App: React.FC = () => {
               <div className="flex flex-col md:flex-row gap-12 items-center">
                  <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3">
-                       <span className="px-3 py-1 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest">Verified Offer</span>
+                       <span className="px-3 py-1 bg-[#B11226] text-white rounded-full text-[9px] font-black uppercase tracking-widest">Verified Offer</span>
                        <span className="text-[10px] font-bold text-black uppercase tracking-widest">Ref: DIAGUARD-{Math.floor(Math.random()*90000)}</span>
                     </div>
                     <h2 className="text-4xl font-black text-black leading-[1.1] uppercase tracking-tighter">Your Intelligence-Backed Premium Schedule</h2>
                     <p className="text-black text-sm leading-relaxed max-w-md">Our 13-agent cluster has reached consensus on your risk profile. The terms below reflect specialized diabetic actuarial tables with metabolic lifestyle adjustments.</p>
                  </div>
                  
-                 <div className="w-full md:w-[320px] bg-black rounded-[2.5rem] p-8 text-white shadow-[0_32px_128px_-12px_rgba(177,18,38,0.3)] relative overflow-hidden group">
-                    <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#B11226]/40 blur-3xl rounded-full group-hover:bg-[#B11226]/60 transition-all duration-700" />
-                    <span className="text-[10px] font-black text-[#B11226] uppercase tracking-[0.2em]">Monthly Installment</span>
+                 <div className="w-full md:w-[320px] bg-[#B11226] rounded-[2.5rem] p-8 text-white shadow-[0_32px_128px_-12px_rgba(177,18,38,0.3)] relative overflow-hidden group">
+                    <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/20 blur-3xl rounded-full group-hover:bg-white/30 transition-all duration-700" />
+                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Monthly Installment</span>
                     <div className="flex items-baseline gap-1.5 mt-4">
                        <span className="text-3xl font-bold opacity-40">$</span>
                        <span className="text-7xl font-black tracking-tighter">{decision?.adjustedPremium.toFixed(2)}</span>
@@ -477,11 +477,11 @@ const App: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-black/5 rounded-3xl p-8 border border-black/5">
-                  <h4 className="text-[10px] font-black text-[#B11226] uppercase tracking-widest mb-6 border-b border-black/10 pb-3">Multi-Agent Underwriting Factors</h4>
+                <div className="lg:col-span-2 bg-[#B11226]/5 rounded-3xl p-8 border border-[#B11226]/10">
+                  <h4 className="text-[10px] font-black text-[#B11226] uppercase tracking-widest mb-6 border-b border-[#B11226]/10 pb-3">Multi-Agent Underwriting Factors</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">
                     {decision && Object.entries(decision.multipliers).map(([k, v]) => (
-                      <div key={k} className="flex justify-between items-center py-2 border-b border-black/5 group">
+                      <div key={k} className="flex justify-between items-center py-2 border-b border-[#B11226]/5 group">
                         <div className="flex items-center gap-2">
                            <div className="w-1.5 h-1.5 bg-[#B11226] rounded-full group-hover:scale-125 transition-transform" />
                            <span className="text-xs font-bold text-black">{k}</span>
@@ -496,7 +496,7 @@ const App: React.FC = () => {
                    <button onClick={handlePaymentTransition} className="group w-full py-6 bg-[#B11226] text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] hover:bg-black shadow-2xl shadow-red-200 transition-all flex items-center justify-center gap-3">
                      Execute Agreement <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                    </button>
-                   <button onClick={() => setShowModifyMenu(true)} className="w-full py-5 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black/5 flex items-center justify-center gap-2 border border-black/5 transition-all">
+                   <button onClick={() => setShowModifyMenu(true)} className="w-full py-5 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#B11226]/5 flex items-center justify-center gap-2 border border-black/5 transition-all">
                      <Settings2 className="w-3.5 h-3.5" /> Direct Re-Entry
                    </button>
                 </div>
@@ -506,11 +506,11 @@ const App: React.FC = () => {
 
           {state === AppState.PAYMENT && (
             <div className="flex-1 flex flex-col items-center justify-center p-12 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')]">
-              <div className="w-full mb-10 flex items-center gap-5 bg-black p-6 rounded-3xl border border-white/10 max-w-md shadow-2xl">
-                <div className="w-14 h-14 bg-[#B11226] rounded-2xl flex items-center justify-center text-white shadow-xl"><Wallet className="w-7 h-7" /></div>
+              <div className="w-full mb-10 flex items-center gap-5 bg-[#B11226] p-6 rounded-3xl border border-white/10 max-w-md shadow-2xl">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-[#B11226] shadow-xl"><Wallet className="w-7 h-7" /></div>
                 <div>
-                  <h4 className="text-xs font-black text-red-500 uppercase tracking-widest leading-none">Finley</h4>
-                  <p className="text-[10px] font-bold text-red-200 uppercase tracking-tighter mt-1">Authorized Financial Execution Core</p>
+                  <h4 className="text-xs font-black text-white uppercase tracking-widest leading-none">Finley</h4>
+                  <p className="text-[10px] font-bold text-white/70 uppercase tracking-tighter mt-1">Authorized Financial Execution Core</p>
                 </div>
               </div>
               <PaymentGateway amount={decision?.adjustedPremium || 0} isProcessing={isIssuing} onPay={() => handlePolicyIssuance()} />
@@ -544,7 +544,7 @@ const App: React.FC = () => {
                     <span className="text-[10px] font-black text-black uppercase tracking-widest mb-1">Policy Identity</span>
                     <h3 className="text-2xl font-black text-black">#{policyId}</h3>
                  </div>
-                 <button onClick={downloadPolicyPDF} className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest hover:bg-[#B11226] flex items-center justify-center gap-3 transition-all shadow-2xl"><Download className="w-5 h-5" /> Download Vault Copy</button>
+                 <button onClick={downloadPolicyPDF} className="w-full py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black flex items-center justify-center gap-3 transition-all shadow-2xl"><Download className="w-5 h-5" /> Download Vault Copy</button>
                </div>
             </div>
           )}
