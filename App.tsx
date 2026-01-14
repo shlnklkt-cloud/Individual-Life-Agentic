@@ -39,13 +39,21 @@ import {
   AlertCircle,
   Briefcase,
   FileText,
-  ChevronDown
+  ChevronDown,
+  Scissors,
+  Tag,
+  Database,
+  ShieldCheck,
+  FileSearch,
+  Check,
+  // Added Loader2 to fix compilation error "Cannot find name 'Loader2'" on line 635
+  Loader2
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import StepProgressBar from './components/StepProgressBar';
 import AgentUI from './components/AgentUI';
 import PaymentGateway from './components/PaymentGateway';
-import { AppState, UserData, UnderwritingDecision, Message, AgentName, MainView } from './types';
+import { AppState, ClaimAppState, UserData, UnderwritingDecision, Message, AgentName, MainView } from './types';
 import { COMPLICATIONS_OPTIONS } from './constants';
 import { PricingEngine } from './services/pricingEngine';
 import { performAIUnderwriting } from './services/geminiService';
@@ -65,7 +73,14 @@ const AGENT_REGISTRY: Record<AgentName, { role: string; icon: React.ReactNode; c
   'Human Underwriter Collaboration': { role: 'Bridge Agent', icon: <UserCheck className="w-4 h-4" />, color: 'bg-orange-600', accent: 'text-orange-400' },
   'Final Underwriting Decision': { role: 'Executive Sign-off', icon: <Scale className="w-4 h-4" />, color: 'bg-[#B11226]', accent: 'text-white' },
   'Finley': { role: 'Finance Agent', icon: <Wallet className="w-4 h-4" />, color: 'bg-indigo-700', accent: 'text-indigo-400' },
-  'Lyra': { role: 'Issuance Officer', icon: <FileCheck className="w-4 h-4" />, color: 'bg-pink-700', accent: 'text-pink-400' }
+  'Lyra': { role: 'Issuance Officer', icon: <FileCheck className="w-4 h-4" />, color: 'bg-pink-700', accent: 'text-pink-400' },
+  // Claims Registry
+  'Intake Orchestration Agent': { role: 'Claims Lead', icon: <Briefcase className="w-4 h-4" />, color: 'bg-slate-900', accent: 'text-slate-400' },
+  'Document Splitting Agent': { role: 'Logical Parser', icon: <Scissors className="w-4 h-4" />, color: 'bg-blue-700', accent: 'text-blue-300' },
+  'Document Classification Agent': { role: 'Type Classifier', icon: <Tag className="w-4 h-4" />, color: 'bg-purple-700', accent: 'text-purple-300' },
+  'Data Extraction Agent': { role: 'Structured Parser', icon: <Database className="w-4 h-4" />, color: 'bg-teal-700', accent: 'text-teal-300' },
+  'Claim Summarization Agent': { role: 'Narrative Lead', icon: <FileText className="w-4 h-4" />, color: 'bg-orange-700', accent: 'text-orange-300' },
+  'Quality & Confidence Agent': { role: 'Compliance Auditor', icon: <ShieldCheck className="w-4 h-4" />, color: 'bg-[#B11226]', accent: 'text-white' }
 };
 
 const INTERVIEW_STEPS: { label: string; key: keyof UserData; question: any; type: string; agent: AgentName; options?: any; labels?: any; min?: any; max?: any; step?: any }[] = [
@@ -93,7 +108,7 @@ const App: React.FC = () => {
   const [loginError, setLoginError] = useState(false);
   const [showInsuranceDropdown, setShowInsuranceDropdown] = useState(false);
 
-  // Bot State
+  // Policy Bot State
   const [state, setState] = useState<AppState>(AppState.INTERVIEW);
   const [activeAgent, setActiveAgent] = useState<AgentName>('Orchestrator Agent');
   const [transferring, setTransferring] = useState<AgentName | null>(null);
@@ -114,6 +129,14 @@ const App: React.FC = () => {
   const [isIssuing, setIsIssuing] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [policyId, setPolicyId] = useState<string>('');
+
+  // Claim Bot State
+  const [claimState, setClaimState] = useState<ClaimAppState>(ClaimAppState.INTAKE);
+  const [claimMessages, setClaimMessages] = useState<Message[]>([
+    { id: 'c1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "SYSTEM_ONLINE: Claims Document Intelligence module active. Please submit a claim file (PDF/ZIP/Email) to begin the autonomous splitting and classification protocol.", timestamp: new Date() }
+  ]);
+  const [claimIsProcessing, setClaimIsProcessing] = useState(false);
+  const [claimActiveAgent, setClaimActiveAgent] = useState<AgentName>('Intake Orchestration Agent');
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const insuranceDropdownRef = useRef<HTMLDivElement>(null);
@@ -122,7 +145,7 @@ const App: React.FC = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, currentView]);
+  }, [messages, claimMessages, currentView]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -161,6 +184,78 @@ const App: React.FC = () => {
     });
     setCurrentView('POLICY');
     setShowInsuranceDropdown(false);
+  };
+
+  const startClaimWorkflow = () => {
+    setClaimState(ClaimAppState.INTAKE);
+    setClaimMessages([
+      { id: 'c1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "SYSTEM_ONLINE: Claims Document Intelligence module active. Please submit a claim file (PDF/ZIP/Email) to begin the autonomous splitting and classification protocol.", timestamp: new Date() }
+    ]);
+    setCurrentView('CLAIM');
+    setShowInsuranceDropdown(false);
+  };
+
+  const runClaimAgenticFlow = async () => {
+    setClaimIsProcessing(true);
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    // User "Submits"
+    setClaimMessages(prev => [...prev, { id: 'u1', role: 'user', text: "Uploading Claim_Package_Michael_Johnson.pdf (6 pages)", timestamp: new Date() }]);
+    await delay(1000);
+
+    // Intake
+    setClaimActiveAgent('Intake Orchestration Agent');
+    setClaimMessages(prev => [...prev, { id: 'a1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "FILE_RECEIVED: 6-page PDF detected. Initiating Page Indexing and Metadata Tagging.", timestamp: new Date() }]);
+    await delay(1500);
+
+    // Splitting
+    setClaimState(ClaimAppState.SPLITTING);
+    setClaimActiveAgent('Document Splitting Agent');
+    setClaimMessages(prev => [...prev, { id: 'a2', role: 'agent', agentName: 'Document Splitting Agent', text: "ANALYZING_LAYOUT: Scanning headers, footers, and signature blocks. Splitting logical documents...", timestamp: new Date() }]);
+    await delay(1000);
+    setClaimMessages(prev => [...prev, { id: 'a3', role: 'agent', agentName: 'Document Splitting Agent', text: "SPLIT_COMPLETE: Found 6 logical documents: Claimant Statement, Employer Statement, Death Certificate, Medical Records, Salary Verification, and Email.", timestamp: new Date() }]);
+    await delay(1500);
+
+    // Classification
+    setClaimState(ClaimAppState.CLASSIFICATION);
+    setClaimActiveAgent('Document Classification Agent');
+    setClaimMessages(prev => [...prev, { id: 'a4', role: 'agent', agentName: 'Document Classification Agent', text: "CLASSIFYING: Running vision-based type identification. Accuracy baseline check in progress.", timestamp: new Date() }]);
+    await delay(1000);
+    setClaimMessages(prev => [...prev, { id: 'a5', role: 'agent', agentName: 'Document Classification Agent', text: "RESULTS: Legal Docs (99.6%), Medical Records (97.8%), Financial Docs (98.1%). All labels confirmed.", timestamp: new Date() }]);
+    await delay(1500);
+
+    // Extraction
+    setClaimState(ClaimAppState.EXTRACTION);
+    setClaimActiveAgent('Data Extraction Agent');
+    setClaimMessages(prev => [...prev, { id: 'a6', role: 'agent', agentName: 'Data Extraction Agent', text: "EXTRACTING_STRUCTURED_DATA: Mapping fields to Pas/Claims core schema.", timestamp: new Date() }]);
+    await delay(1000);
+    const extractionResult = { 
+      claimant_name: "Sarah Johnson", 
+      employee_name: "Michael Johnson", 
+      policy_number: "GL-784392", 
+      date_of_death: "2025-02-12", 
+      cause_of_death: "Acute Myocardial Infarction", 
+      annual_salary: 92000 
+    };
+    setClaimMessages(prev => [...prev, { id: 'a7', role: 'agent', agentName: 'Data Extraction Agent', text: `EXTRACTION_SUCCESS: JSON_OBJECT_READY:\n${JSON.stringify(extractionResult, null, 2)}`, timestamp: new Date() }]);
+    await delay(2000);
+
+    // Summarization
+    setClaimState(ClaimAppState.SUMMARIZATION);
+    setClaimActiveAgent('Claim Summarization Agent');
+    setClaimMessages(prev => [...prev, { id: 'a8', role: 'agent', agentName: 'Claim Summarization Agent', text: "SYNTHESIZING_ADJUDICATOR_SUMMARY: Mapping medical findings to policy eligibility.", timestamp: new Date() }]);
+    await delay(1500);
+    setClaimMessages(prev => [...prev, { id: 'a9', role: 'agent', agentName: 'Claim Summarization Agent', text: "SUMMARY: Michael Johnson, a full-time employee, passed away on February 12, 2025. Death certificate confirms acute myocardial infarction. Employment and salary eligibility verified. No policy exclusions identified. Required documents complete. Claim appears payable subject to standard review.", timestamp: new Date() }]);
+    await delay(1500);
+
+    // Quality Check
+    setClaimState(ClaimAppState.QUALITY_CHECK);
+    setClaimActiveAgent('Quality & Confidence Agent');
+    setClaimMessages(prev => [...prev, { id: 'a10', role: 'agent', agentName: 'Quality & Confidence Agent', text: "AUDITING_INTEGRITY: No critical docs missing. Data conflicts: None. Confidence threshold: PASS (0.98 avg).", timestamp: new Date() }]);
+    await delay(1000);
+    setClaimMessages(prev => [...prev, { id: 'a11', role: 'agent', agentName: 'Quality & Confidence Agent', text: "STATUS: AUTO-APPROVE_READY. Data transmitted to PAS core system.", timestamp: new Date() }]);
+    
+    setClaimIsProcessing(false);
   };
 
   const handleTransfer = (nextAgent: AgentName, nextState: AppState, callback?: () => void) => {
@@ -369,13 +464,13 @@ const App: React.FC = () => {
             </div>
             
             <nav className="hidden lg:flex items-center space-x-8">
-              {/* Insurance Menu with Dropdown */}
+              {/* Policy Menu with Dropdown */}
               <div className="relative" ref={insuranceDropdownRef}>
                 <button 
                   onClick={() => setShowInsuranceDropdown(!showInsuranceDropdown)} 
                   className={`text-sm font-bold tracking-tight py-2 transition-colors border-b-2 flex items-center gap-1.5 ${currentView === 'POLICY' ? 'border-[#B11226] text-slate-900' : 'border-transparent text-slate-600 hover:text-slate-900'}`}
                 >
-                  Insurance <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showInsuranceDropdown ? 'rotate-180' : ''}`} />
+                  Policy <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showInsuranceDropdown ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {showInsuranceDropdown && (
@@ -398,6 +493,14 @@ const App: React.FC = () => {
                 )}
               </div>
 
+              {/* Claim Menu Item */}
+              <button 
+                onClick={startClaimWorkflow}
+                className={`text-sm font-bold tracking-tight py-2 transition-colors border-b-2 ${currentView === 'CLAIM' ? 'border-[#B11226] text-slate-900' : 'border-transparent text-slate-600 hover:text-slate-900'}`}
+              >
+                Claim
+              </button>
+
               <button className="text-sm font-bold tracking-tight text-slate-600 hover:text-slate-900 flex items-center gap-1">Investing & saving <ChevronDown className="w-3.5 h-3.5" /></button>
               <button className="text-sm font-bold tracking-tight text-slate-600 hover:text-slate-900">Retirement</button>
               <button className="text-sm font-bold tracking-tight text-slate-600 hover:text-slate-900">Business solutions</button>
@@ -418,9 +521,9 @@ const App: React.FC = () => {
         
         {currentView === 'DASHBOARD' && (
           <div className="flex-1 animate-in fade-in duration-700">
-            <div className="mb-12">
+            <div className="mb-12 text-center max-w-2xl mx-auto">
               <h1 className="text-5xl font-black text-black tracking-tighter uppercase mb-4">Central Hub</h1>
-              <p className="text-black/60 font-medium">Select a specialized workflow to begin underwriting or claims processing.</p>
+              <p className="text-black/60 font-medium">Select a specialized workflow to begin underwriting or claims document intelligence.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -434,7 +537,7 @@ const App: React.FC = () => {
                 <div className="w-16 h-16 bg-[#B11226] rounded-2xl flex items-center justify-center text-white mb-8 shadow-xl">
                   <Briefcase className="w-8 h-8" />
                 </div>
-                <h3 className="text-3xl font-black text-black uppercase tracking-tighter mb-4">Individual Life</h3>
+                <h3 className="text-3xl font-black text-black uppercase tracking-tighter mb-4">Individual Policy</h3>
                 <p className="text-black/60 leading-relaxed mb-8 max-w-xs">Launch the multi-agent clinical ingestion protocol for specialized diabetic life insurance applications.</p>
                 <div className="flex items-center gap-3 text-[#B11226] font-black text-xs uppercase tracking-widest">
                   Start Application <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
@@ -442,7 +545,7 @@ const App: React.FC = () => {
               </div>
 
               <div 
-                onClick={() => setCurrentView('CLAIM')}
+                onClick={startClaimWorkflow}
                 className="group relative bg-white border border-black/5 rounded-[2.5rem] p-12 shadow-sm hover:shadow-2xl hover:border-[#B11226]/20 transition-all cursor-pointer overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -451,10 +554,10 @@ const App: React.FC = () => {
                 <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white mb-8 shadow-xl">
                   <FileText className="w-8 h-8" />
                 </div>
-                <h3 className="text-3xl font-black text-black uppercase tracking-tighter mb-4">Group Life & Claims</h3>
-                <p className="text-black/60 leading-relaxed mb-8 max-w-xs">Verify clinical event markers and automate death benefit distribution through the secure clearing node.</p>
+                <h3 className="text-3xl font-black text-black uppercase tracking-tighter mb-4">Claims Intelligence</h3>
+                <p className="text-black/60 leading-relaxed mb-8 max-w-xs">Verify clinical event markers and automate document splitting, classification, and summarization.</p>
                 <div className="flex items-center gap-3 text-slate-900 font-black text-xs uppercase tracking-widest">
-                  Access Ledger <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                  Process Claim <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                 </div>
               </div>
             </div>
@@ -462,18 +565,109 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'CLAIM' && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-12 animate-in fade-in zoom-in duration-500">
-            <div className="w-24 h-24 bg-slate-100 rounded-[2rem] flex items-center justify-center mb-8">
-              <Briefcase className="w-12 h-12 text-black/20" />
+          <div className="animate-in fade-in slide-in-from-bottom-12 duration-700 space-y-8">
+            {/* Claims Step Progress */}
+            <div className="w-full py-6">
+              <div className="flex items-center justify-between max-w-4xl mx-auto px-6">
+                {[
+                  { id: ClaimAppState.INTAKE, label: 'Intake', icon: <Briefcase className="w-3.5 h-3.5" /> },
+                  { id: ClaimAppState.SPLITTING, label: 'Splitting', icon: <Scissors className="w-3.5 h-3.5" /> },
+                  { id: ClaimAppState.CLASSIFICATION, label: 'Type', icon: <Tag className="w-3.5 h-3.5" /> },
+                  { id: ClaimAppState.EXTRACTION, label: 'Data', icon: <Database className="w-3.5 h-3.5" /> },
+                  { id: ClaimAppState.SUMMARIZATION, label: 'Summary', icon: <FileText className="w-3.5 h-3.5" /> },
+                  { id: ClaimAppState.QUALITY_CHECK, label: 'Quality', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+                ].map((step, idx) => {
+                  const currentIdx = [
+                    ClaimAppState.INTAKE, ClaimAppState.SPLITTING, ClaimAppState.CLASSIFICATION, 
+                    ClaimAppState.EXTRACTION, ClaimAppState.SUMMARIZATION, ClaimAppState.QUALITY_CHECK
+                  ].indexOf(claimState);
+                  const isActive = idx <= currentIdx;
+                  const isCurrent = idx === currentIdx;
+
+                  return (
+                    <div key={step.id} className="flex flex-col items-center flex-1 relative">
+                      {idx !== 0 && (
+                        <div className={`absolute top-4 -left-1/2 w-full h-[2px] transition-all duration-700 ${idx <= currentIdx ? 'bg-black' : 'bg-black/10'}`} />
+                      )}
+                      <div className={`relative z-10 w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all duration-500 ${isCurrent ? 'bg-black border-black text-white shadow-xl rotate-45 scale-110' : isActive ? 'bg-white border-black text-black' : 'bg-white border-black/10 text-black/20'}`}>
+                        <div className={isCurrent ? '-rotate-45' : ''}>{step.icon}</div>
+                      </div>
+                      <span className={`mt-3 text-[8px] font-black uppercase tracking-widest ${isActive ? 'text-black' : 'text-black/30'}`}>{step.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <h2 className="text-4xl font-black text-black uppercase tracking-tighter mb-4">Service Offline</h2>
-            <p className="text-black/60 max-w-md mb-10">This module is currently in development. Specialized individual underwriting via our AI cluster is active.</p>
-            <button 
-              onClick={() => setCurrentView('DASHBOARD')}
-              className="px-10 py-4 bg-black text-white rounded-2xl font-black uppercase tracking-widest hover:bg-[#B11226] transition-all shadow-xl"
-            >
-              Return to Dashboard
-            </button>
+
+            <div className="bg-white rounded-[2.5rem] shadow-[0_32px_128px_-12px_rgba(0,0,0,0.1)] border border-black/5 overflow-hidden flex flex-col h-[700px]">
+              {/* Operational Core Header */}
+              <div className="bg-black/5 px-8 py-3 border-b border-black/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black text-black uppercase tracking-widest">Claims Core:</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#B11226]">{claimActiveAgent}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-black/10 rounded-full shadow-sm">
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-[9px] font-bold text-black uppercase">Agentic Processing Active</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Chat View */}
+              <div ref={scrollRef} className="flex-1 p-8 overflow-y-auto space-y-6 custom-scrollbar scroll-smooth">
+                {claimMessages.map((m) => (
+                  <div key={m.id} className={`flex ${m.role === 'agent' ? 'justify-start' : 'justify-end'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+                    <div className={`max-w-[85%] flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm border ${m.role === 'agent' ? (AGENT_REGISTRY[m.agentName || claimActiveAgent]?.color || 'bg-black') + ' text-white' : 'bg-[#B11226] text-white'}`}>
+                        {m.role === 'agent' ? AGENT_REGISTRY[m.agentName || claimActiveAgent]?.icon : <User className="w-5 h-5" />}
+                      </div>
+                      <div className="flex flex-col">
+                        {m.role === 'agent' && <p className="text-[9px] font-black uppercase mb-1.5 text-black tracking-widest">{m.agentName || claimActiveAgent}</p>}
+                        <div className={`p-6 rounded-2xl text-[13px] font-medium leading-relaxed shadow-sm whitespace-pre-wrap ${m.role === 'agent' ? 'bg-black/5 text-black rounded-tl-none border border-black/5' : 'bg-black text-white rounded-tr-none'}`}>
+                          {m.text}
+                        </div>
+                        <span className="text-[8px] font-bold text-black/30 uppercase mt-1 self-end">{m.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {claimIsProcessing && (
+                  <div className="flex items-center gap-3 text-black/40 text-[10px] font-black uppercase tracking-widest ml-14 animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Agent thinking...
+                  </div>
+                )}
+              </div>
+
+              {/* Action Bar */}
+              <div className="p-8 border-t border-black/10 bg-white">
+                <div className="max-w-3xl mx-auto flex items-center gap-4">
+                  <div className="flex-1 relative group">
+                    <div className="w-full pl-8 pr-20 py-5 rounded-[1.25rem] border-2 border-black/5 bg-black/[0.02] transition-all font-mono text-[11px] text-black flex items-center gap-3">
+                      <FileSearch className="w-4 h-4 text-black/40" />
+                      {claimState === ClaimAppState.INTAKE ? "Waiting for Michael_Johnson_Death_Claim.pdf..." : "Multi-agent processing active..."}
+                    </div>
+                  </div>
+                  {claimState === ClaimAppState.INTAKE && !claimIsProcessing && (
+                    <button 
+                      onClick={runClaimAgenticFlow}
+                      className="px-10 py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-black transition-all flex items-center gap-3 active:scale-95"
+                    >
+                      Process Case Study <ArrowRight className="w-5 h-5" />
+                    </button>
+                  )}
+                  {claimState === ClaimAppState.QUALITY_CHECK && !claimIsProcessing && (
+                    <button 
+                      onClick={startClaimWorkflow}
+                      className="px-10 py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-[#B11226] transition-all flex items-center gap-3 active:scale-95"
+                    >
+                      Clear & Start New Claim <RefreshCw className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

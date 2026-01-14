@@ -7,6 +7,15 @@ export enum AppState {
   ISSUANCE = 'ISSUANCE'
 }
 
+export enum ClaimAppState {
+  INTAKE = 'INTAKE',
+  SPLITTING = 'SPLITTING',
+  CLASSIFICATION = 'CLASSIFICATION',
+  EXTRACTION = 'EXTRACTION',
+  SUMMARIZATION = 'SUMMARIZATION',
+  QUALITY_CHECK = 'QUALITY_CHECK'
+}
+
 export type MainView = 'LOGIN' | 'DASHBOARD' | 'POLICY' | 'CLAIM';
 
 export type AgentName = 
@@ -24,7 +33,14 @@ export type AgentName =
   | 'Human Underwriter Collaboration'
   | 'Final Underwriting Decision'
   | 'Finley'
-  | 'Lyra';
+  | 'Lyra'
+  // Claims Agents
+  | 'Intake Orchestration Agent'
+  | 'Document Splitting Agent'
+  | 'Document Classification Agent'
+  | 'Data Extraction Agent'
+  | 'Claim Summarization Agent'
+  | 'Quality & Confidence Agent';
 
 export interface Message {
   id: string;
