@@ -56,7 +56,7 @@ const AGENT_LOGS = [
   "PRICING_OPT: Optimizing premium terms for clinical stability.",
   "COMPLIANCE_GEN: Drafting explainability logic for adverse actions.",
   "SYNC_BRIDGE: Transmitting case file for human-agent consensus.",
-  "FINAL_AUTH: Authorizing policy issuance under protocol DGL-9."
+  "FINAL_AUTH: Authorizing policy issuance under protocol CL-9."
 ];
 
 const AgentUI: React.FC<Props> = ({ reasoning, decisionText, isProcessing, riskScore }) => {
@@ -152,7 +152,7 @@ const AgentUI: React.FC<Props> = ({ reasoning, decisionText, isProcessing, riskS
               </div>
             </div>
             <div className="mt-8 p-5 bg-black text-white rounded-2xl border border-white/10 shadow-xl">
-               <p className="text-[9px] font-bold leading-relaxed uppercase tracking-widest text-center">Protocol DGL-OS active. Deterministic underwriting in progress.</p>
+               <p className="text-[9px] font-bold leading-relaxed uppercase tracking-widest text-center">Protocol CL-OS active. Deterministic underwriting in progress.</p>
             </div>
           </div>
         </div>
@@ -190,7 +190,7 @@ const AgentUI: React.FC<Props> = ({ reasoning, decisionText, isProcessing, riskS
             <div className="p-3 bg-[#B11226] rounded-2xl shadow-xl shadow-red-900/20"><Search className="w-5 h-5 text-white" /></div>
             <div>
               <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.2em]">Clinical Explainability Summary</h4>
-              <p className="text-[9px] font-bold text-white uppercase tracking-widest">AUTHORIZED PROTOCOL DGL-X</p>
+              <p className="text-[9px] font-bold text-white uppercase tracking-widest">AUTHORIZED PROTOCOL CL-X</p>
             </div>
           </div>
           <p className="text-white text-base leading-relaxed font-medium">"{reasoning}"</p>

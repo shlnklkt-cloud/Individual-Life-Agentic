@@ -130,7 +130,7 @@ const PaymentGateway: React.FC<Props> = ({ amount, onPay, isProcessing }) => {
         </button>
 
         <p className="text-center text-[10px] text-[#B11226]/30 font-black uppercase tracking-[0.2em] mt-8">
-           SECURE TRANSACTION // ENCRYPTED NODE DGL-P1
+           SECURE TRANSACTION // ENCRYPTED NODE CL-P1
         </p>
       </div>
     </div>

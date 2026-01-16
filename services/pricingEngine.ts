@@ -12,7 +12,7 @@ export class PricingEngine {
     multipliers['Age Loading'] = ageMultiplier;
     totalMultiplier *= ageMultiplier;
 
-    // Gender Factor (Standard actuarial adjustment: Female is lower risk for mortality)
+    // Gender Factor
     let genderMultiplier = 1.0;
     if (data.gender === 'Female') genderMultiplier = 0.95;
     if (data.gender === 'Male') genderMultiplier = 1.05;
@@ -32,7 +32,6 @@ export class PricingEngine {
     let occMultiplier = 1.0;
     if (data.occupation === 'Manual Labor/Trade') occMultiplier = 1.25;
     if (data.occupation === 'Healthcare Professional') occMultiplier = 1.1;
-    if (data.occupation === 'IT Project Manager' || data.occupation === 'Office/Admin') occMultiplier = 1.0;
     multipliers['Occupational Risk'] = occMultiplier;
     totalMultiplier *= occMultiplier;
 
@@ -48,21 +47,31 @@ export class PricingEngine {
     if (alcoholMultiplier > 1) multipliers['Alcohol Usage Loading'] = alcoholMultiplier;
     totalMultiplier *= alcoholMultiplier;
 
-    // HbA1c Factor (The Core Diabetic Risk)
-    let hba1cMultiplier = 1.0;
-    if (data.hba1c < 6.5) {
-      hba1cMultiplier = 1.0;
-    } else if (data.hba1c < 7.5) {
-      hba1cMultiplier = 1.4;
-    } else if (data.hba1c < 8.5) {
-      hba1cMultiplier = 2.2;
-    } else if (data.hba1c < 10.0) {
-      hba1cMultiplier = 3.5;
-    } else {
-      hba1cMultiplier = 10.0; // Automatic Manual Review / Decline
+    // Hobby Risk Factor
+    let hobbyMultiplier = 1.0;
+    const hazardousHobbies: Record<string, number> = {
+      'Scuba diving': 1.15,
+      'Skydiving': 1.50,
+      'Mountaineering': 1.25,
+      'Racing': 1.30
+    };
+    if (hazardousHobbies[data.hobby]) {
+      hobbyMultiplier = hazardousHobbies[data.hobby];
+      multipliers[`Hobby Risk: ${data.hobby}`] = hobbyMultiplier;
     }
-    multipliers['HbA1c Level'] = hba1cMultiplier;
-    totalMultiplier *= hba1cMultiplier;
+    totalMultiplier *= hobbyMultiplier;
+
+    // HbA1c Factor
+    let hba1cMultiplier = 1.0;
+    if (data.hba1c >= 6.5 && data.hba1c < 7.5) hba1cMultiplier = 1.4;
+    else if (data.hba1c >= 7.5 && data.hba1c < 8.5) hba1cMultiplier = 2.2;
+    else if (data.hba1c >= 8.5 && data.hba1c < 10.0) hba1cMultiplier = 3.5;
+    else if (data.hba1c >= 10.0) hba1cMultiplier = 8.0;
+    
+    if (hba1cMultiplier > 1) {
+        multipliers['HbA1c Level'] = hba1cMultiplier;
+        totalMultiplier *= hba1cMultiplier;
+    }
 
     // BMI Factor
     let bmiMultiplier = 1.0;
@@ -77,18 +86,28 @@ export class PricingEngine {
     if (complicationsMultiplier > 1) multipliers['Medical History'] = complicationsMultiplier;
     totalMultiplier *= complicationsMultiplier;
 
-    // Coverage Amount Factor (Base rate is for $100k)
+    // Family History Factor
+    let fhMultiplier = 1.0;
+    const fhWeights: Record<string, number> = { 'Father': 1.1, 'Mother': 1.1, 'Siblings': 1.15, 'Multiple': 1.25 };
+    if (fhWeights[data.fhHeartDisease]) fhMultiplier *= fhWeights[data.fhHeartDisease];
+    if (fhWeights[data.fhDiabetes]) fhMultiplier *= fhWeights[data.fhDiabetes];
+    if (fhWeights[data.fhCancer]) fhMultiplier *= fhWeights[data.fhCancer];
+    if (fhWeights[data.fhGenetic]) fhMultiplier *= fhWeights[data.fhGenetic];
+
+    if (fhMultiplier > 1) {
+        multipliers['Family History Loading'] = fhMultiplier;
+        totalMultiplier *= fhMultiplier;
+    }
+
     const coverageFactor = data.coverageAmount / 100000;
-    
     const basePremium = BASE_MONTHLY_RATE * coverageFactor;
     const adjustedPremium = basePremium * totalMultiplier;
 
     let status: 'APPROVED' | 'REJECTED' | 'MANUAL_REVIEW' = 'APPROVED';
-    if (data.hba1c >= 10.0 || complicationCount >= 3 || data.alcoholConsumption === 'Frequent') {
+    if (data.hba1c >= 10.0 || complicationCount >= 3 || totalMultiplier > 15) {
       status = 'MANUAL_REVIEW';
     }
 
-    // Risk Score (0-100)
     const riskScore = Math.min(100, (totalMultiplier / 10) * 100);
 
     return {
@@ -102,12 +121,11 @@ export class PricingEngine {
   }
 
   private static generateReasoning(data: UserData, status: string): string {
-    const activityLevel = ['Walking/Hiking', 'Yoga', 'Swimming', 'Team Sports', 'Gardening'].includes(data.hobby) ? 'active' : 'sedentary';
-    const alcoholLevel = data.alcoholConsumption.toLowerCase();
+    const hasFamilyHistory = data.fhHeartDisease !== 'None' || data.fhDiabetes !== 'None' || data.fhCancer !== 'None' || data.fhGenetic !== 'None';
     
     if (status === 'MANUAL_REVIEW') {
-      return `Application flagged for expert review due to clinical markers (HbA1c: ${data.hba1c}) or lifestyle factors (${alcoholLevel} alcohol usage). Initial automated screening suggests potential volatility for the requested ${data.product}. Activity levels via hobby (${data.hobby}) and occupational profile (${data.occupation}) noted for final review.`;
+      return `Application flagged for expert review. Clinical markers (HbA1c: ${data.hba1c}) or complex risk aggregation including ${hasFamilyHistory ? 'significant family history' : 'lifestyle factors'} require manual adjudication.`;
     }
-    return `Patient demonstrates ${data.hba1c < 7 ? 'excellent' : 'managed'} glycemic control with an HbA1c of ${data.hba1c}. Hobbies include ${data.hobby}, and alcohol consumption is ${alcoholLevel}. Occupational profile (${data.occupation}) and selected ${data.product} have been factored into demographic adjustments. Coverage approved.`;
+    return `Patient demonstrates managed glycemic control. Multi-agent cluster factored in occupational risk, active hobby profile, and ${hasFamilyHistory ? 'disclosed family history markers' : 'unremarkable family history'}. Terms optimized for clinical stability.`;
   }
 }

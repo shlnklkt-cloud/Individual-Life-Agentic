@@ -8,6 +8,7 @@ export enum AppState {
 }
 
 export enum ClaimAppState {
+  INTRO = 'INTRO',
   INTAKE = 'INTAKE',
   SPLITTING = 'SPLITTING',
   CLASSIFICATION = 'CLASSIFICATION',
@@ -54,6 +55,7 @@ export interface Message {
 export interface UserData {
   fullName: string;
   email: string;
+  dob?: string;
   age: number;
   gender: string;
   occupation: string;
@@ -66,6 +68,12 @@ export interface UserData {
   bmi: number;
   yearsDiagnosed: number;
   complications: string[];
+  hasDiabetes?: 'Yes' | 'No';
+  medicalReportName?: string;
+  fhHeartDisease: string;
+  fhDiabetes: string;
+  fhCancer: string;
+  fhGenetic: string;
 }
 
 export interface UnderwritingDecision {

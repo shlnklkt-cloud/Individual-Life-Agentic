@@ -1,5 +1,7 @@
 {
-  "name": "DiaGuard Life: Smart Underwriting",
+  "name": "Canada Life: Smart Underwriting",
   "description": "An AI-powered life insurance application platform specifically designed for diabetic patients, featuring real-time risk assessment and automated underwriting agents.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }
