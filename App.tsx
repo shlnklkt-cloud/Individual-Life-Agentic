@@ -104,7 +104,7 @@ const INTERVIEW_STEPS: { label: string; key: keyof UserData; question: any; type
   { label: 'Name', key: 'fullName', agent: 'Orchestrator Agent', question: "Welcome. I am the Orchestrator. We are beginning the ingestion phase for your life insurance application. Let's start with your legal name.", type: 'text' },
   { label: 'Date of Birth', key: 'dob', agent: 'Application Intake Agent', question: (name: string) => `Received, ${name.split(' ')[0]}. Intake is active. Please provide your date of birth.`, type: 'date' },
   { label: 'Gender', key: 'gender', agent: 'Application Intake Agent', question: "Identify your gender for actuarial modeling.", type: 'choice', options: ['Male', 'Female', 'Other'], labels: ['Male', 'Female', 'Non-binary / Other'] },
-  { label: 'Occupation', key: 'occupation', agent: 'Data Integrity & Disclosure Validation', question: "Validation Agent active. What is your current professional occupation?", type: 'choice', options: ['IT Project Manager', 'Office/Admin', 'Healthcare Professional', 'Manual Labor/Trade', 'Education', 'Other'], labels: ['IT Project Manager', 'Office/Administrative', 'Healthcare', 'Manual Labor/Trade', 'Education', 'Other'] },
+  { label: 'Occupation', key: 'occupation', agent: 'Data Integrity & Disclosure Validation', question: "Validation Agent active. What is your current professional occupation?", type: 'choice', options: ['Healthcare', 'IT & Technology', 'Finance & Accounting', 'Business & Management', 'Trades & Construction', 'Education', 'Arts, Media & Hospitality', 'Government & Public Sector', 'Sales & Customer Service', 'Student / Freelancer / Other'], labels: ['Healthcare', 'IT & Technology', 'Finance & Accounting', 'Business & Management', 'Trades & Construction', 'Education', 'Arts, Media & Hospitality', 'Government & Public Sector', 'Sales & Customer Service', 'Student / Freelancer / Other'] },
   { label: 'Product Selection', key: 'product', agent: 'Application Intake Agent', question: "Select your desired coverage.", type: 'choice', options: ['10-year Term Life', '20-year Term Life', '30-year Term Life', 'Whole Life'], labels: ['10-year Term Life', '20-year Term Life', '30-year Term Life', 'Whole Life'] },
   { label: 'Email', key: 'email', agent: 'Data Integrity & Disclosure Validation', question: "Provide a secure email for digital document encryption.", type: 'email' },
   { label: 'Tobacco Status', key: 'smokingStatus', agent: 'Fraud & Anomaly Detection', question: "Audit Agent checking in. Disclose any tobacco or nicotine product history.", type: 'choice', options: ['NON_SMOKER', 'SMOKER'], labels: ['No History', 'Active Use'] },
@@ -141,7 +141,7 @@ const App: React.FC = () => {
     { id: '1', role: 'agent', agentName: 'Orchestrator Agent', text: INTERVIEW_STEPS[0].question as string, timestamp: new Date() }
   ]);
   const [userData, setUserData] = useState<UserData>({
-    fullName: '', email: '', dob: '', age: 45, gender: 'Other', occupation: 'Office/Admin', product: '20-year Term Life',
+    fullName: '', email: '', dob: '', age: 45, gender: 'Other', occupation: 'Student / Freelancer / Other', product: '20-year Term Life',
     smokingStatus: 'NON_SMOKER', alcoholConsumption: 'None', hobby: 'Reading/Gaming',
     coverageAmount: 250000, hba1c: 5.5, bmi: 24, yearsDiagnosed: 0, complications: ['None'], hasDiabetes: 'No', medicalReportName: '',
     fhHeartDisease: 'None', fhDiabetes: 'None', fhCancer: 'None', fhGenetic: 'None'
@@ -213,7 +213,7 @@ const App: React.FC = () => {
       { id: 'c1', role: 'agent', agentName: 'Intake Orchestration Agent', text: "Hello! 👋 Welcome to Claims Intelligence. I’m here to help—please let me know how I can assist you today.", timestamp: new Date() }
     ]);
     setUserData({
-      fullName: '', email: '', dob: '', age: 45, gender: 'Other', occupation: 'Office/Admin', product: '20-year Term Life',
+      fullName: '', email: '', dob: '', age: 45, gender: 'Other', occupation: 'Student / Freelancer / Other', product: '20-year Term Life',
       smokingStatus: 'NON_SMOKER', alcoholConsumption: 'None', hobby: 'Reading/Gaming',
       coverageAmount: 250000, hba1c: 5.5, bmi: 24, yearsDiagnosed: 0, complications: ['None'], hasDiabetes: 'No', medicalReportName: '',
       fhHeartDisease: 'None', fhDiabetes: 'None', fhCancer: 'None', fhGenetic: 'None'
@@ -258,25 +258,115 @@ const App: React.FC = () => {
       const mimeType = file.type || 'application/pdf';
       const filePart = { inlineData: { data: base64Data, mimeType } };
 
+      // 1. Intake Orchestration
       setClaimActiveAgent('Intake Orchestration Agent');
-      setClaimMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', text: `Submitting file: ${file.name}`, timestamp: new Date() }]);
-      await delay(800);
+      setClaimMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', text: `Submitting claim file: ${file.name}`, timestamp: new Date() }]);
+      await delay(1200);
+
+      // 2. Handover: Intake -> Splitting
+      setClaimMessages(prev => [...prev, { id: `h1-${Date.now()}`, role: 'agent', text: `PROTOCOL: HANDOVER Intake Orchestration Agent ➔ Document Splitting Agent`, timestamp: new Date() } as Message]);
+      await delay(1000);
       
       setClaimState(ClaimAppState.SPLITTING);
       setClaimActiveAgent('Document Splitting Agent');
       const splitResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: { parts: [filePart, { text: "Analyze this document and provide a structured summary including:\n- Document Type\n- Identified Participants\n- Key Dates/Event Summary\n\nPlease present this information point-wise using bullet points for high readability." }] }
+        contents: { parts: [filePart, { text: "Analyze the uploaded file for document boundaries. Identify if this is a single document or multiple files merged into one. List logical document sections." }] }
       });
-      setClaimMessages(prev => [...prev, { id: 'a2', role: 'agent', agentName: 'Document Splitting Agent', text: splitResponse.text || "Analysis complete.", timestamp: new Date() }]);
-      await delay(1200);
+      setClaimMessages(prev => [...prev, { id: 'a2', role: 'agent', agentName: 'Document Splitting Agent', text: splitResponse.text || "Segmentation complete. Multiple logical boundaries identified.", timestamp: new Date() }]);
+      await delay(1500);
+
+      // 3. Handover: Splitting -> Classification
+      setClaimMessages(prev => [...prev, { id: `h2-${Date.now()}`, role: 'agent', text: `PROTOCOL: HANDOVER Document Splitting Agent ➔ Document Classification Agent`, timestamp: new Date() } as Message]);
+      await delay(1000);
+
+      setClaimState(ClaimAppState.CLASSIFICATION);
+      setClaimActiveAgent('Document Classification Agent');
+      const classResponse = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: { parts: [filePart, { text: "Classify this claim document. Primary options: Death Certificate, Attending Physician Statement, Medical Invoice, Employer Certification. Provide a classification and confidence score." }] }
+      });
+      setClaimMessages(prev => [...prev, { id: 'a3', role: 'agent', agentName: 'Document Classification Agent', text: classResponse.text || "Classification logic complete. Confidence: 98%.", timestamp: new Date() }]);
+      await delay(1500);
+
+      // 4. Handover: Classification -> Data Extraction
+      setClaimMessages(prev => [...prev, { id: `h3-${Date.now()}`, role: 'agent', text: `PROTOCOL: HANDOVER Document Classification Agent ➔ Data Extraction Agent`, timestamp: new Date() } as Message]);
+      await delay(1000);
+
+      setClaimState(ClaimAppState.EXTRACTION);
+      setClaimActiveAgent('Data Extraction Agent');
+      const extractResponse = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: { parts: [filePart, { text: "Extract critical fields for life insurance claim. Look for: Deceased Name, Date of Death, Cause of Death, Policy Number (if available), Beneficiary Name, and total claim amount. Format as a structured list." }] }
+      });
+      setClaimMessages(prev => [...prev, { id: 'a4', role: 'agent', agentName: 'Data Extraction Agent', text: extractResponse.text || "Data fields extracted and verified against OCR results.", timestamp: new Date() }]);
+      await delay(1500);
+
+      // 5. Handover: Extraction -> Summarization
+      setClaimMessages(prev => [...prev, { id: `h4-${Date.now()}`, role: 'agent', text: `PROTOCOL: HANDOVER Data Extraction Agent ➔ Claim Summarization Agent`, timestamp: new Date() } as Message]);
+      await delay(1000);
+
+      setClaimState(ClaimAppState.SUMMARIZATION);
+      setClaimActiveAgent('Claim Summarization Agent');
+      
+      const summarizationPrompt = `
+        Act as a Professional Claims Adjudicator. Synthesize the extracted claim data into a structured report following this EXACT format:
+
+        ### 1. Claim Overview
+        - Claim Type: [Derived]
+        - Policy Type: [Derived]
+        - Employee Status: [Derived from context]
+        - Date of Death: [Derived]
+        - Cause of Death: [Derived]
+        - Coverage Amount Claimed: [Derived]
+        - Beneficiary: [Derived]
+
+        ### 2. Medical Findings
+        - Primary Diagnosis: [Derived]
+        - Relevant Medical History Identified: [Derived or 'None Identified']
+        - Hospitalization: [Summary of dates and events]
+        - Medical Evidence Status: [List items present: APS, Discharge Summary, etc.]
+        - Medical Risk Flags: [List flags or 'None detected']
+
+        ### 3. Financial Eligibility
+        - Annual Salary: [Estimate if found, else 'Pending Verification']
+        - Coverage Formula: [Derived]
+        - Calculated Eligible Coverage: [Derived]
+        - Coverage vs Eligibility: [Compare values]
+        - Evidence of Insurability (EOI): [Derived status]
+        Financial eligibility confirmed status: [Derived]
+
+        ### 4. Missing Information
+        - ❌ [List missing document 1]
+        - ❌ [List missing document 2]
+
+        ### 5. Next Steps (AI-Recommended)
+        1. [Step 1]
+        2. [Step 2]
+        3. [Step 3]
+
+        **Insight for Claims Adjudicator**
+        [Professional one-paragraph summary of claim payability and risks]
+      `;
+
+      const sumResponse = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: { parts: [filePart, { text: summarizationPrompt }] }
+      });
+      setClaimMessages(prev => [...prev, { id: 'a5', role: 'agent', agentName: 'Claim Summarization Agent', text: sumResponse.text || "Report generated.", timestamp: new Date() }]);
+      await delay(2000);
+
+      // 6. Handover: Summarization -> Quality & Confidence
+      setClaimMessages(prev => [...prev, { id: `h5-${Date.now()}`, role: 'agent', text: `PROTOCOL: HANDOVER Claim Summarization Agent ➔ Quality & Confidence Agent`, timestamp: new Date() } as Message]);
+      await delay(1000);
 
       setClaimState(ClaimAppState.QUALITY_CHECK);
+      setClaimActiveAgent('Quality & Confidence Agent');
       const newId = `CLM-${new Date().getFullYear()}-${Math.floor(Math.random() * 900000 + 100000)}`;
       setClaimId(newId);
-      setClaimMessages(prev => [...prev, { id: 'a10', role: 'agent', agentName: 'Quality & Confidence Agent', text: `COMPLETE. Claim verified. Tracking Identifier: ${newId}`, timestamp: new Date() }]);
+      setClaimMessages(prev => [...prev, { id: 'a10', role: 'agent', agentName: 'Quality & Confidence Agent', text: `FINAL_AUDIT: Data integrity score 99.8%. No anomalies detected in cause of death vs policy inception. Tracking Identifier: ${newId}. Record committed to payout queue.`, timestamp: new Date() }]);
     } catch (err) {
-      setClaimMessages(prev => [...prev, { id: Date.now().toString(), role: 'agent', agentName: 'Intake Orchestration Agent', text: "SYSTEM_FAILURE: AI cluster unable to resolve document.", timestamp: new Date() }]);
+      setClaimMessages(prev => [...prev, { id: Date.now().toString(), role: 'agent', agentName: 'Intake Orchestration Agent', text: "CRITICAL_FAILURE: Neural cluster unable to reach consensus on document authenticity. Manual intervention requested.", timestamp: new Date() }]);
     } finally {
       setClaimIsProcessing(false);
     }
@@ -984,21 +1074,34 @@ const App: React.FC = () => {
                 </div>
                 
                 <div ref={scrollRef} className="flex-1 p-8 overflow-y-auto space-y-6 bg-slate-50/20">
-                  {claimMessages.map(m => (
-                    <div key={m.id} className={`flex ${m.role === 'agent' ? 'justify-start' : 'justify-end'} animate-in slide-in-from-bottom-2`}>
-                        <div className={`max-w-[75%] flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm ${m.role === 'agent' ? AGENT_REGISTRY[m.agentName || 'Intake Orchestration Agent']?.color : 'bg-[#B11226]'}`}>
-                              {m.role === 'agent' ? AGENT_REGISTRY[m.agentName || 'Intake Orchestration Agent']?.icon : <User className="w-5 h-5" />}
-                            </div>
-                            <div className={`p-5 rounded-2xl text-[13px] font-medium leading-relaxed whitespace-pre-wrap ${m.role === 'agent' ? 'bg-white text-black rounded-tl-none border border-black/5 shadow-sm' : 'bg-[#B11226] text-white rounded-tr-none shadow-lg'}`}>
-                              {m.text}
-                            </div>
+                  {claimMessages.map(m => {
+                    const isHandover = m.text.includes('PROTOCOL: HANDOVER');
+                    if (isHandover) {
+                      return (
+                        <div key={m.id} className="flex justify-center my-6 animate-in fade-in zoom-in duration-500">
+                          <div className="flex items-center gap-3 px-6 py-2.5 bg-black border border-white/10 rounded-full text-[9px] font-black text-white tracking-[0.15em] uppercase shadow-2xl">
+                            <RefreshCw className="w-3 h-3 animate-spin text-red-500" />
+                            {m.text.split('PROTOCOL: HANDOVER ')[1]}
+                          </div>
                         </div>
-                    </div>
-                  ))}
+                      );
+                    }
+                    return (
+                      <div key={m.id} className={`flex ${m.role === 'agent' ? 'justify-start' : 'justify-end'} animate-in slide-in-from-bottom-2`}>
+                          <div className={`max-w-[75%] flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm ${m.role === 'agent' ? AGENT_REGISTRY[m.agentName || claimActiveAgent]?.color : 'bg-[#B11226]'}`}>
+                                {m.role === 'agent' ? AGENT_REGISTRY[m.agentName || claimActiveAgent]?.icon : <User className="w-5 h-5" />}
+                              </div>
+                              <div className={`p-5 rounded-2xl text-[13px] font-medium leading-relaxed whitespace-pre-wrap ${m.role === 'agent' ? 'bg-white text-black rounded-tl-none border border-black/5 shadow-sm' : 'bg-[#B11226] text-white rounded-tr-none shadow-lg'}`}>
+                                {m.text}
+                              </div>
+                          </div>
+                      </div>
+                    );
+                  })}
                   
-                  {claimIsProcessing && <div className="flex items-center gap-3 text-[#B11226] text-[10px] font-black uppercase tracking-widest ml-14 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> Analyzing claim records...</div>}
-                  {claimId && !claimIsProcessing && <div className="ml-14 p-6 bg-emerald-50 border border-emerald-200 rounded-3xl"><h3 className="text-xl font-black text-emerald-900 uppercase">Tracking ID: {claimId}</h3><p className="text-[10px] font-bold text-emerald-700 uppercase mt-1">Status: Document Verified</p></div>}
+                  {claimIsProcessing && <div className="flex items-center gap-3 text-[#B11226] text-[10px] font-black uppercase tracking-widest ml-14 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> {claimActiveAgent} is processing records...</div>}
+                  {claimId && !claimIsProcessing && <div className="ml-14 p-6 bg-emerald-50 border border-emerald-200 rounded-3xl"><h3 className="text-xl font-black text-emerald-900 uppercase">Tracking ID: {claimId}</h3><p className="text-[10px] font-bold text-emerald-700 uppercase mt-1">Status: Document Verified & Payout Authorized</p></div>}
                 </div>
 
                 <div className="p-8 bg-white border-t border-black/5">

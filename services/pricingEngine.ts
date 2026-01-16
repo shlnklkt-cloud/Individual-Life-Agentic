@@ -1,4 +1,3 @@
-
 import { UserData, UnderwritingDecision } from '../types';
 import { BASE_MONTHLY_RATE } from '../constants';
 
@@ -30,8 +29,9 @@ export class PricingEngine {
 
     // Occupation Factor
     let occMultiplier = 1.0;
-    if (data.occupation === 'Manual Labor/Trade') occMultiplier = 1.25;
-    if (data.occupation === 'Healthcare Professional') occMultiplier = 1.1;
+    if (data.occupation === 'Trades & Construction') occMultiplier = 1.25;
+    if (data.occupation === 'Healthcare') occMultiplier = 1.1;
+    if (data.occupation === 'Government & Public Sector') occMultiplier = 1.05;
     multipliers['Occupational Risk'] = occMultiplier;
     totalMultiplier *= occMultiplier;
 
