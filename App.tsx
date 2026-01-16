@@ -72,7 +72,7 @@ import { COMPLICATIONS_OPTIONS } from './constants';
 import { PricingEngine } from './services/pricingEngine';
 import { performAIUnderwriting, analyzeBMIFromImage } from './services/geminiService';
 
-const GROUP_LIFE_URL = "https://ai.studio/apps/drive/14qeBjrFetwCRrt6QCTJFxIeLKPX16qRM?fullscreenApplet=true";
+const GROUP_LIFE_URL = "https://ai.studio/apps/drive/1AAmdY3duiggItX7968x-MMc3Henv-s0J?fullscreenApplet=true";
 
 const AGENT_REGISTRY: Record<AgentName, { role: string; icon: React.ReactNode; color: string; accent: string }> = {
   'Orchestrator Agent': { role: 'Workflow Lead', icon: <LayoutGrid className="w-4 h-4" />, color: 'bg-slate-900', accent: 'text-slate-400' },
@@ -122,6 +122,44 @@ const INTERVIEW_STEPS: { label: string; key: keyof UserData; question: any; type
   { label: 'FH Cancer', key: 'fhCancer', agent: 'Mortality Scoring & Risk Aggregation', question: "Any family history of Cancer?", type: 'choice', options: FH_OPTIONS, labels: FH_OPTIONS },
   { label: 'FH Genetic Disorders', key: 'fhGenetic', agent: 'Mortality Scoring & Risk Aggregation', question: "Any family history of Genetic Disorders?", type: 'choice', options: FH_OPTIONS, labels: FH_OPTIONS },
 ];
+
+const CanadaLifeLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
+  const containerClasses = {
+    sm: 'scale-50 -ml-10',
+    md: 'scale-75 -ml-4',
+    lg: 'scale-100'
+  }[size];
+
+  const textSizes = {
+    sm: 'text-[32px]',
+    md: 'text-[42px]',
+    lg: 'text-[52px]'
+  }[size];
+
+  const boxSizes = {
+    sm: 'w-[45px] h-[45px]',
+    md: 'w-[60px] h-[60px]',
+    lg: 'w-[74px] h-[74px]'
+  }[size];
+
+  const lifeTextSizes = {
+    sm: 'text-[28px]',
+    md: 'text-[36px]',
+    lg: 'text-[42px]'
+  }[size];
+
+  return (
+    <div className={`flex items-center select-none ${containerClasses}`}>
+      <span className={`${textSizes} font-normal tracking-[-0.03em] text-[#71726a] mr-2.5`} style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>canada</span>
+      <div className="relative">
+        <div className={`bg-[#B11226] ${boxSizes} flex items-center justify-center rounded-sm shadow-sm overflow-hidden pb-1 px-1`}>
+          <span className={`text-white ${lifeTextSizes} font-bold leading-none`} style={{ fontFamily: "'Dancing Script', cursive" }}>life</span>
+        </div>
+        <span className="absolute -top-1 -right-6 text-[#71726a] text-[10px] font-bold">TM</span>
+      </div>
+    </div>
+  );
+}
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<MainView>('LOGIN');
@@ -572,7 +610,7 @@ const App: React.FC = () => {
     doc.text(`Primary Physical Activity: ${userData.hobby}`, 20, y);
     y += 10;
     doc.setFont("helvetica", "bold");
-    doc.text(`Family History Disclosures:`, 20, y);
+    doc.text('Family History Disclosures:', 20, y);
     y += 6;
     doc.setFont("helvetica", "normal");
     doc.text(`- Heart Disease: ${userData.fhHeartDisease}`, 25, y);
@@ -640,16 +678,15 @@ const App: React.FC = () => {
 
   if (currentView === 'LOGIN') {
     return (
-      <div className="min-h-screen bg-[#B11226] flex items-center justify-center p-6 relative overflow-hidden">
+      <div className="h-screen bg-[#B11226] flex items-center justify-center p-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
           <div className="absolute top-10 left-10 w-64 h-64 border-4 border-white rounded-full animate-pulse" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-white rounded-full opacity-5" />
         </div>
-        <div className="w-full max-md bg-white rounded-[2.5rem] shadow-2xl p-12 relative z-10 animate-in zoom-in duration-700">
+        <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-12 relative z-10 animate-in zoom-in duration-700">
           <div className="flex flex-col items-center mb-10">
-            <div className="w-16 h-16 bg-[#B11226] rounded-2xl flex items-center justify-center text-white shadow-2xl mb-6"><Shield className="w-10 h-10" /></div>
-            <h1 className="text-3xl font-black text-black uppercase tracking-tighter">Canada Life</h1>
-            <p className="text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mt-2">Enterprise Access Portal</p>
+            <CanadaLifeLogo size="lg" />
+            <p className="text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mt-10">Enterprise Access Portal</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
@@ -674,14 +711,11 @@ const App: React.FC = () => {
   const medicalSteps = [INTERVIEW_STEPS[4], INTERVIEW_STEPS[5], ...INTERVIEW_STEPS.slice(9, 16)];
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-red-100 bg-white">
-      <header className="bg-white border-b border-black/5 sticky top-0 z-[100] h-20 shadow-sm px-8 flex items-center justify-between">
+    <div className="h-screen flex flex-col font-sans selection:bg-red-100 bg-white overflow-hidden">
+      <header className="bg-white border-b border-black/5 h-20 shadow-sm px-8 flex items-center justify-between shrink-0 z-[100]">
         <div className="flex items-center gap-10">
           <div className="flex items-center cursor-pointer group" onClick={() => setCurrentView('DASHBOARD')}>
-            <span className="text-3xl font-normal tracking-tight text-[#71726a] mr-2">canada</span>
-            <div className="bg-[#B11226] w-12 h-12 flex items-center justify-center rounded-sm shadow-md group-hover:scale-105 transition-transform overflow-hidden pb-1 px-1">
-              <span className="text-white text-2xl font-bold" style={{ fontFamily: "'Dancing Script', cursive" }}>life</span>
-            </div>
+            <CanadaLifeLogo size="md" />
           </div>
           
           <nav className="hidden lg:flex items-center space-x-6">
@@ -746,420 +780,364 @@ const App: React.FC = () => {
         <button onClick={handleLogout} className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 rounded-full hover:bg-[#B11226] hover:text-white transition-all text-[10px] font-black uppercase tracking-widest">Sign out</button>
       </header>
 
-      <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-6 py-12">
+      <main className="flex-1 overflow-hidden relative">
         {currentView === 'DASHBOARD' && (
-          <div className="animate-in fade-in duration-700">
-            <div className="text-center mb-16">
-              <h1 className="text-6xl font-black uppercase tracking-tighter mb-4 text-slate-900 leading-none">Intelligence Engine</h1>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Strategic Portfolios & Global Risk Adjudication</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* INSURANCE CARD with Nested Options */}
-              <div className="p-10 border border-black/5 rounded-[3.5rem] bg-white shadow-sm hover:shadow-2xl transition-all h-full flex flex-col group relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#B11226]/5 rounded-full -mr-10 -mt-10 group-hover:scale-110 transition-transform" />
-                <div className="w-16 h-16 bg-[#B11226] rounded-2xl flex items-center justify-center text-white mb-10 shadow-xl group-hover:rotate-6 transition-transform">
-                  <Shield className="w-8 h-8" />
-                </div>
-                <h3 className="text-3xl font-black uppercase mb-4 text-slate-900">Insurance</h3>
-                <p className="text-slate-400 text-[11px] font-bold uppercase leading-relaxed mb-8 flex-1">Multi-modal risk shielding across life, health, and group assets.</p>
-                
-                <div className="space-y-8">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                       <ShieldCheck className="w-3.5 h-3.5 text-[#B11226]" />
-                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#B11226]">1. Policy Submenu</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                       <button onClick={startPolicyApp} className="py-4 bg-slate-50 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-[#B11226] hover:text-white transition-all text-center">Individual Life</button>
-                       <button onClick={startGroupLifeRedirect} className="py-4 bg-slate-50 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-900 hover:text-white transition-all text-center flex items-center justify-center gap-1.5 px-2">Group Life <ExternalLink className="w-3 h-3" /></button>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                       <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">2. Claim Submenu</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                       <button className="py-4 bg-slate-50 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-300 cursor-not-allowed text-center">Individual Claim</button>
-                       <button onClick={startClaimWorkflow} className="py-4 bg-slate-50 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-[#B11226] hover:text-white transition-all text-center">Group Claim</button>
-                    </div>
+          <div className="h-full w-full animate-in fade-in duration-1000 overflow-hidden">
+            <div className="flex flex-col lg:flex-row h-full w-full overflow-hidden">
+              
+              {/* Left Pane: Health and Dental */}
+              <div className="relative flex-1 bg-cover bg-right overflow-hidden h-full" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1590650516494-0c8e4a4dd67e?q=80&w=2071&auto=format&fit=crop")' }}>
+                <div className="absolute inset-0 bg-black/5" />
+                <div className="relative h-full flex items-center justify-start px-8 lg:px-12 xl:px-16">
+                  {/* Elongated vertically and decreased horizontally */}
+                  <div className="bg-white/95 pt-12 pb-20 px-8 max-w-[65%] lg:max-w-[240px] xl:max-w-[280px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] relative transition-all">
+                    <p className="text-[#71726a] text-[12px] lg:text-[14px] font-bold mb-5 tracking-tight leading-snug">Freedom to Choose™ health and dental insurance</p>
+                    <h1 className="text-2xl lg:text-3xl xl:text-[38px] font-normal text-slate-900 leading-[1.05] mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Health and dental coverage when it matters</h1>
+                    <p className="text-sm lg:text-base text-slate-600 font-medium leading-relaxed mb-6">From routine dentist checkups to physiotherapy sessions, you can build a plan that fits your needs.</p>
+                    <div className="absolute bottom-0 left-0 w-[40%] h-[8px] bg-[#B11226]" />
                   </div>
                 </div>
               </div>
 
-              {/* INVESTING & SAVING */}
-              <div className="p-10 border border-black/5 rounded-[3.5rem] bg-white shadow-sm hover:shadow-2xl transition-all h-full flex flex-col group relative overflow-hidden">
-                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-10 shadow-xl group-hover:rotate-6 transition-transform">
-                  <PiggyBank className="w-8 h-8" />
+              {/* Right Pane: Term Life */}
+              <div className="relative flex-1 bg-cover bg-right overflow-hidden h-full" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=2040&auto=format&fit=crop")' }}>
+                <div className="absolute inset-0 bg-black/5" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 z-[200]">
+                  <button className="bg-[#B11226] text-white py-6 lg:py-8 px-1.5 lg:px-2 rounded-l-md font-bold text-[9px] lg:text-[11px] uppercase tracking-widest [writing-mode:vertical-lr] rotate-180 flex items-center justify-center hover:bg-black transition-colors shadow-lg">
+                    Give Feedback
+                  </button>
                 </div>
-                <h3 className="text-3xl font-black uppercase mb-4 text-slate-900">Investing</h3>
-                <p className="text-slate-400 text-[11px] font-bold uppercase leading-relaxed mb-8 flex-1">Global market exposure and strategic wealth accumulation protocols.</p>
-                <div className="mt-auto">
-                   <button className="w-full py-5 border-2 border-dashed border-slate-100 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-300 cursor-not-allowed">Access Blocked</button>
-                </div>
-              </div>
-
-              {/* RETIREMENT */}
-              <div className="p-10 border border-black/5 rounded-[3.5rem] bg-white shadow-sm hover:shadow-2xl transition-all h-full flex flex-col group relative overflow-hidden">
-                <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center text-white mb-10 shadow-xl group-hover:rotate-6 transition-transform">
-                  <Sunrise className="w-8 h-8" />
-                </div>
-                <h3 className="text-3xl font-black uppercase mb-4 text-slate-900">Retirement</h3>
-                <p className="text-slate-400 text-[11px] font-bold uppercase leading-relaxed mb-8 flex-1">Securing long-horizon capital and deterministic income streams.</p>
-                <div className="mt-auto">
-                   <button className="w-full py-5 border-2 border-dashed border-slate-100 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-300 cursor-not-allowed">Access Blocked</button>
-                </div>
-              </div>
-
-              {/* Business solutions */}
-              <div className="p-10 border border-black/5 rounded-[3.5rem] bg-white shadow-sm hover:shadow-2xl transition-all h-full flex flex-col group relative overflow-hidden">
-                <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white mb-10 shadow-xl group-hover:rotate-6 transition-transform">
-                  <Building className="w-8 h-8" />
-                </div>
-                <h3 className="text-3xl font-black uppercase mb-4 text-slate-900">Business</h3>
-                <p className="text-slate-400 text-[11px] font-bold uppercase leading-relaxed mb-8 flex-1">Institutional liquidity and bespoke employee benefit architectures.</p>
-                <div className="mt-auto">
-                   <button className="w-full py-5 border-2 border-dashed border-slate-100 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-300 cursor-not-allowed">Access Blocked</button>
-                </div>
-              </div>
-
-              {/* Insights & advice */}
-              <div className="p-10 border border-black/5 rounded-[3.5rem] bg-white shadow-sm hover:shadow-2xl transition-all h-full flex flex-col group relative overflow-hidden">
-                <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center text-white mb-10 shadow-xl group-hover:rotate-6 transition-transform">
-                  <Lightbulb className="w-8 h-8" />
-                </div>
-                <h3 className="text-3xl font-black uppercase mb-4 text-slate-900">Insights</h3>
-                <p className="text-slate-400 text-[11px] font-bold uppercase leading-relaxed mb-8 flex-1">Algorithmic advisement and neural market forecasting.</p>
-                <div className="mt-auto">
-                   <button className="w-full py-5 border-2 border-dashed border-slate-100 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-300 cursor-not-allowed">Access Blocked</button>
-                </div>
-              </div>
-
-              {/* STATS CARD */}
-              <div className="p-10 bg-[#B11226] rounded-[3.5rem] text-white flex flex-col justify-between group shadow-2xl">
-                <div>
-                  <Activity className="w-10 h-10 mb-6 opacity-50 group-hover:scale-110 transition-transform" />
-                  <h3 className="text-2xl font-black uppercase leading-none mb-2">System Status</h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Node: CL-GLOBAL-ALPHA</p>
-                </div>
-                <div className="mt-8">
-                  <div className="flex justify-between items-end mb-2">
-                    <span className="text-[9px] font-black uppercase">Neutral Bandwidth</span>
-                    <span className="text-xl font-black">99.9%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
-                    <div className="h-full w-[99.9%] bg-white rounded-full animate-pulse" />
+                {/* Horizontal Elongation & Vertical Compression */}
+                <div className="relative h-full flex items-end justify-start px-8 lg:px-12 pb-10 lg:pb-12 xl:pb-14">
+                  <div className="bg-white/95 pt-5 pb-3 px-8 max-w-[85%] lg:max-w-md xl:max-w-lg shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] transition-all">
+                    <h2 className="text-base lg:text-lg xl:text-xl font-medium text-slate-900 leading-tight mb-2">Protect your family with term life insurance</h2>
+                    <button 
+                      onClick={startPolicyApp}
+                      className="text-[#B11226] text-xs lg:text-sm xl:text-base font-bold flex items-center gap-2 group"
+                    >
+                      Explore term life insurance <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    <div className="mt-3 lg:mt-4 flex justify-center">
+                      <div className="w-1.5 h-1.5 bg-[#B11226] rounded-full" />
+                    </div>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         )}
 
         {/* --- POLICY WORKFLOW --- */}
-        {currentView === 'POLICY' && (
-          <div className="animate-in fade-in duration-700">
-            <StepProgressBar currentState={state} />
-            <div className="bg-white rounded-[2.5rem] shadow-xl border border-black/5 overflow-hidden flex flex-col min-h-[600px] relative">
-              {transferring && (
-                <div className="absolute inset-0 z-[150] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center text-white animate-in fade-in duration-500">
-                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl mb-4 ${AGENT_REGISTRY[transferring].color}`}>{AGENT_REGISTRY[transferring].icon}</div>
-                  <h3 className="text-xl font-black uppercase tracking-widest">Routing Context...</h3>
-                  <p className="text-white/40 font-mono text-[10px] mt-2">DETERMINING NEURAL PATH</p>
-                </div>
-              )}
+        {(currentView === 'POLICY' || currentView === 'CLAIM') && (
+          <div className="h-full max-w-6xl mx-auto w-full px-6 py-12 overflow-y-auto">
+            {currentView === 'POLICY' && (
+              <div className="animate-in fade-in duration-700 min-h-full">
+                <StepProgressBar currentState={state} />
+                <div className="bg-white rounded-[2.5rem] shadow-xl border border-black/5 overflow-hidden flex flex-col min-h-[600px] relative">
+                  {transferring && (
+                    <div className="absolute inset-0 z-[150] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center text-white animate-in fade-in duration-500">
+                      <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl mb-4 ${AGENT_REGISTRY[transferring].color}`}>{AGENT_REGISTRY[transferring].icon}</div>
+                      <h3 className="text-xl font-black uppercase tracking-widest">Routing Context...</h3>
+                      <p className="text-white/40 font-mono text-[10px] mt-2">DETERMINING NEURAL PATH</p>
+                    </div>
+                  )}
 
-              {state === AppState.INTERVIEW && (
-                <div className="flex-1 flex flex-col h-[600px]">
-                  <div className="bg-slate-50 px-8 py-3 border-b border-black/5 flex justify-between">
-                    <span className="text-[10px] font-black uppercase text-slate-400">ACTIVE_AGENT: <span className="text-black">{activeAgent}</span></span>
-                    <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#B11226] rounded-full animate-pulse" /><span className="text-[9px] font-bold uppercase">Streaming Live</span></div>
-                  </div>
-                  <div ref={scrollRef} className="flex-1 p-8 overflow-y-auto space-y-6 bg-slate-50/20">
-                    {messages.map((m) => {
-                      const isHandover = m.text.includes('PROTOCOL: HANDOVER');
-                      if (isHandover) {
-                        return (
-                          <div key={m.id} className="flex justify-center my-6 animate-in fade-in zoom-in duration-500">
-                            <div className="flex items-center gap-3 px-6 py-2.5 bg-black border border-white/10 rounded-full text-[9px] font-black text-white tracking-[0.15em] uppercase shadow-2xl">
-                              <RefreshCw className="w-3 h-3 animate-spin text-red-500" />
-                              {m.text.split('PROTOCOL: HANDOVER ')[1]}
-                            </div>
-                          </div>
-                        );
-                      }
-                      return (
-                        <div key={m.id} className={`flex ${m.role === 'agent' ? 'justify-start' : 'justify-end'} animate-in slide-in-from-bottom-2`}>
-                          <div className={`max-w-[75%] flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm ${m.role === 'agent' ? AGENT_REGISTRY[m.agentName || activeAgent]?.color : 'bg-[#B11226]'}`}>
-                              {m.role === 'agent' ? AGENT_REGISTRY[m.agentName || activeAgent]?.icon : <User className="w-5 h-5" />}
-                            </div>
-                            <div className={`p-5 rounded-2xl text-[13px] font-medium leading-relaxed whitespace-pre-wrap ${m.role === 'agent' ? 'bg-white text-black rounded-tl-none border border-black/5 shadow-sm' : 'bg-[#B11226] text-white rounded-tr-none shadow-lg'}`}>
-                              {m.text}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {isBiometricLoading && (
-                      <div className="flex items-center gap-3 text-[#B11226] text-[10px] font-black uppercase tracking-widest ml-14 animate-pulse">
-                        <Scan className="w-4 h-4 animate-spin" /> Analyzing physical biometric markers...
+                  {state === AppState.INTERVIEW && (
+                    <div className="flex-1 flex flex-col h-[600px]">
+                      <div className="bg-slate-50 px-8 py-3 border-b border-black/5 flex justify-between">
+                        <span className="text-[10px] font-black uppercase text-slate-400">ACTIVE_AGENT: <span className="text-black">{activeAgent}</span></span>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#B11226] rounded-full animate-pulse" /><span className="text-[9px] font-bold uppercase">Streaming Live</span></div>
                       </div>
-                    )}
-                  </div>
-                  <div className="p-8 bg-white border-t border-black/5">
-                    <div className="max-w-2xl mx-auto">
-                      {INTERVIEW_STEPS[stepIndex].type === 'biometric' ? (
-                        <div className="w-full">
-                          <input type="file" ref={biometricInputRef} onChange={handleBiometricUpload} className="hidden" accept="image/*" />
-                          <button onClick={() => biometricInputRef.current?.click()} disabled={isBiometricLoading} className="w-full p-10 border-2 border-dashed rounded-[2rem] border-[#B11226]/20 hover:bg-[#B11226]/5 transition-all flex flex-col items-center gap-4 group">
-                             <div className="w-16 h-16 bg-[#B11226] rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:rotate-6 transition-transform"><Camera className="w-8 h-8" /></div>
-                             <p className="font-black uppercase text-sm tracking-tight">Upload Natural Face Scan</p>
-                             <p className="text-xs text-black/40 font-bold uppercase">No Filters Required</p>
-                          </button>
-                        </div>
-                      ) : INTERVIEW_STEPS[stepIndex].type === 'choice' ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {INTERVIEW_STEPS[stepIndex].options.map((opt: string, i: number) => (
-                            <button key={opt} onClick={() => handleUserResponse(opt, INTERVIEW_STEPS[stepIndex].labels?.[i] || opt)} className="px-6 py-4 bg-white border-2 border-black/5 rounded-2xl font-bold hover:border-[#B11226] hover:bg-[#B11226] hover:text-white transition-all text-xs">
-                              {INTERVIEW_STEPS[stepIndex].labels?.[i] || opt}
-                            </button>
-                          ))}
-                        </div>
-                      ) : INTERVIEW_STEPS[stepIndex].type === 'range' ? (
-                        <div className="space-y-6 px-4">
-                          <div className="flex justify-between items-end">
-                            <span className="text-4xl font-black text-[#B11226] tracking-tighter">
-                              {INTERVIEW_STEPS[stepIndex].key === 'coverageAmount' ? `$${userData.coverageAmount.toLocaleString()}` : `${userData.hba1c}%`}
-                            </span>
+                      <div ref={scrollRef} className="flex-1 p-8 overflow-y-auto space-y-6 bg-slate-50/20">
+                        {messages.map((m) => {
+                          const isHandover = m.text.includes('PROTOCOL: HANDOVER');
+                          if (isHandover) {
+                            return (
+                              <div key={m.id} className="flex justify-center my-6 animate-in fade-in zoom-in duration-500">
+                                <div className="flex items-center gap-3 px-6 py-2.5 bg-black border border-white/10 rounded-full text-[9px] font-black text-white tracking-[0.15em] uppercase shadow-2xl">
+                                  <RefreshCw className="w-3 h-3 animate-spin text-red-500" />
+                                  {m.text.split('PROTOCOL: HANDOVER ')[1]}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div key={m.id} className={`flex ${m.role === 'agent' ? 'justify-start' : 'justify-end'} animate-in slide-in-from-bottom-2`}>
+                              <div className={`max-w-[75%] flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm ${m.role === 'agent' ? AGENT_REGISTRY[m.agentName || activeAgent]?.color : 'bg-[#B11226]'}`}>
+                                  {m.role === 'agent' ? AGENT_REGISTRY[m.agentName || activeAgent]?.icon : <User className="w-5 h-5" />}
+                                </div>
+                                <div className={`p-5 rounded-2xl text-[13px] font-medium leading-relaxed whitespace-pre-wrap ${m.role === 'agent' ? 'bg-white text-black rounded-tl-none border border-black/5 shadow-sm' : 'bg-[#B11226] text-white rounded-tr-none shadow-lg'}`}>
+                                  {m.text}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {isBiometricLoading && (
+                          <div className="flex items-center gap-3 text-[#B11226] text-[10px] font-black uppercase tracking-widest ml-14 animate-pulse">
+                            <Scan className="w-4 h-4 animate-spin" /> Analyzing physical biometric markers...
                           </div>
-                          <input type="range" min={INTERVIEW_STEPS[stepIndex].min} max={INTERVIEW_STEPS[stepIndex].max} step={INTERVIEW_STEPS[stepIndex].step} className="w-full h-1.5 bg-black/5 rounded-full appearance-none cursor-pointer accent-[#B11226]" value={INTERVIEW_STEPS[stepIndex].key === 'hba1c' ? userData.hba1c : userData.coverageAmount} onChange={(e) => setUserData({...userData, [INTERVIEW_STEPS[stepIndex].key]: parseFloat(e.target.value)})} />
-                          <button onClick={() => handleUserResponse(INTERVIEW_STEPS[stepIndex].key === 'hba1c' ? userData.hba1c : userData.coverageAmount, INTERVIEW_STEPS[stepIndex].key === 'hba1c' ? `${userData.hba1c}%` : `$${userData.coverageAmount.toLocaleString()}`)} className="w-full py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl">Confirm Amount</button>
+                        )}
+                      </div>
+                      <div className="p-8 bg-white border-t border-black/5">
+                        <div className="max-w-2xl mx-auto">
+                          {INTERVIEW_STEPS[stepIndex].type === 'biometric' ? (
+                            <div className="w-full">
+                              <input type="file" ref={biometricInputRef} onChange={handleBiometricUpload} className="hidden" accept="image/*" />
+                              <button onClick={() => biometricInputRef.current?.click()} disabled={isBiometricLoading} className="w-full p-10 border-2 border-dashed rounded-[2rem] border-[#B11226]/20 hover:bg-[#B11226]/5 transition-all flex flex-col items-center gap-4 group">
+                                <div className="w-16 h-16 bg-[#B11226] rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:rotate-6 transition-transform"><Camera className="w-8 h-8" /></div>
+                                <p className="font-black uppercase text-sm tracking-tight">Upload Natural Face Scan</p>
+                                <p className="text-xs text-black/40 font-bold uppercase">No Filters Required</p>
+                              </button>
+                            </div>
+                          ) : INTERVIEW_STEPS[stepIndex].type === 'choice' ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {INTERVIEW_STEPS[stepIndex].options.map((opt: string, i: number) => (
+                                <button key={opt} onClick={() => handleUserResponse(opt, INTERVIEW_STEPS[stepIndex].labels?.[i] || opt)} className="px-6 py-4 bg-white border-2 border-black/5 rounded-2xl font-bold hover:border-[#B11226] hover:bg-[#B11226] hover:text-white transition-all text-xs">
+                                  {INTERVIEW_STEPS[stepIndex].labels?.[i] || opt}
+                                </button>
+                              ))}
+                            </div>
+                          ) : INTERVIEW_STEPS[stepIndex].type === 'range' ? (
+                            <div className="space-y-6 px-4">
+                              <div className="flex justify-between items-end">
+                                <span className="text-4xl font-black text-[#B11226] tracking-tighter">
+                                  {INTERVIEW_STEPS[stepIndex].key === 'coverageAmount' ? `$${userData.coverageAmount.toLocaleString()}` : `${userData.hba1c}%`}
+                                </span>
+                              </div>
+                              <input type="range" min={INTERVIEW_STEPS[stepIndex].min} max={INTERVIEW_STEPS[stepIndex].max} step={INTERVIEW_STEPS[stepIndex].step} className="w-full h-1.5 bg-black/5 rounded-full appearance-none cursor-pointer accent-[#B11226]" value={INTERVIEW_STEPS[stepIndex].key === 'hba1c' ? userData.hba1c : userData.coverageAmount} onChange={(e) => setUserData({...userData, [INTERVIEW_STEPS[stepIndex].key]: parseFloat(e.target.value)})} />
+                              <button onClick={() => handleUserResponse(INTERVIEW_STEPS[stepIndex].key === 'hba1c' ? userData.hba1c : userData.coverageAmount, INTERVIEW_STEPS[stepIndex].key === 'hba1c' ? `${userData.hba1c}%` : `$${userData.coverageAmount.toLocaleString()}`)} className="w-full py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl">Confirm Amount</button>
+                            </div>
+                          ) : INTERVIEW_STEPS[stepIndex].type === 'multi-choice' ? (
+                            <div className="space-y-6">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {INTERVIEW_STEPS[stepIndex].options?.map((opt: string) => (
+                                  <button key={opt} onClick={() => { const newComps = userData.complications.includes(opt) ? userData.complications.filter(c => c !== opt) : [...userData.complications.filter(c => c !== 'None'), opt]; setUserData({...userData, complications: newComps.length ? newComps : ['None']}); }} className={`px-6 py-4 rounded-2xl text-[11px] font-bold transition-all border-2 text-center flex flex-col gap-1 ${userData.complications.includes(opt) ? 'bg-[#B11226] border-[#B11226] text-white' : 'bg-white border-black/5 text-black hover:border-black/20'}`}>{opt}</button>
+                                ))}
+                              </div>
+                              <button onClick={() => handleUserResponse(userData.complications, userData.complications.join(', '))} className="w-full py-5 bg-[#B11226] text-white rounded-[1.25rem] font-black uppercase tracking-widest shadow-2xl">Confirm Selections</button>
+                            </div>
+                          ) : INTERVIEW_STEPS[stepIndex].type === 'file' ? (
+                            <div className="w-full">
+                              <input type="file" ref={policyFileInputRef} onChange={handlePolicyFileUpload} className="hidden" accept=".pdf,image/*" />
+                              <button onClick={() => policyFileInputRef.current?.click()} className="w-full p-8 border-2 border-dashed border-[#B11226]/30 rounded-[1.25rem] hover:bg-[#B11226]/5 transition-all flex flex-col items-center gap-4 group">
+                                <Upload className="w-8 h-8 text-[#B11226] group-hover:rotate-6 transition-transform" />
+                                <p className="text-sm font-black uppercase">Upload Medical Proof</p>
+                              </button>
+                            </div>
+                          ) : (
+                            <form onSubmit={(e) => { e.preventDefault(); if(inputValue) handleUserResponse(inputValue); }} className="relative">
+                              <input autoFocus type={INTERVIEW_STEPS[stepIndex].type} className="w-full px-8 py-5 rounded-2xl border-2 border-black/5 focus:border-[#B11226] outline-none font-bold" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="Enter response..." />
+                              <button type="submit" className="absolute right-3 top-3 bottom-3 px-6 bg-[#B11226] text-white rounded-xl font-black uppercase text-[10px]">Enter</button>
+                            </form>
+                          )}
                         </div>
-                      ) : INTERVIEW_STEPS[stepIndex].type === 'multi-choice' ? (
-                        <div className="space-y-6">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {INTERVIEW_STEPS[stepIndex].options?.map((opt: string) => (
-                              <button key={opt} onClick={() => { const newComps = userData.complications.includes(opt) ? userData.complications.filter(c => c !== opt) : [...userData.complications.filter(c => c !== 'None'), opt]; setUserData({...userData, complications: newComps.length ? newComps : ['None']}); }} className={`px-6 py-4 rounded-2xl text-[11px] font-bold transition-all border-2 text-center flex flex-col gap-1 ${userData.complications.includes(opt) ? 'bg-[#B11226] border-[#B11226] text-white' : 'bg-white border-black/5 text-black hover:border-black/20'}`}>{opt}</button>
-                            ))}
-                          </div>
-                          <button onClick={() => handleUserResponse(userData.complications, userData.complications.join(', '))} className="w-full py-5 bg-[#B11226] text-white rounded-[1.25rem] font-black uppercase tracking-widest shadow-2xl">Confirm Selections</button>
-                        </div>
-                      ) : INTERVIEW_STEPS[stepIndex].type === 'file' ? (
-                        <div className="w-full">
-                          <input type="file" ref={policyFileInputRef} onChange={handlePolicyFileUpload} className="hidden" accept=".pdf,image/*" />
-                          <button onClick={() => policyFileInputRef.current?.click()} className="w-full p-8 border-2 border-dashed border-[#B11226]/30 rounded-[1.25rem] hover:bg-[#B11226]/5 transition-all flex flex-col items-center gap-4 group">
-                            <Upload className="w-8 h-8 text-[#B11226] group-hover:rotate-6 transition-transform" />
-                            <p className="text-sm font-black uppercase">Upload Medical Proof</p>
-                          </button>
-                        </div>
-                      ) : (
-                        <form onSubmit={(e) => { e.preventDefault(); if(inputValue) handleUserResponse(inputValue); }} className="relative">
-                          <input autoFocus type={INTERVIEW_STEPS[stepIndex].type} className="w-full px-8 py-5 rounded-2xl border-2 border-black/5 focus:border-[#B11226] outline-none font-bold" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="Enter response..." />
-                          <button type="submit" className="absolute right-3 top-3 bottom-3 px-6 bg-[#B11226] text-white rounded-xl font-black uppercase text-[10px]">Enter</button>
-                        </form>
+                      </div>
+                    </div>
+                  )}
+
+                  {state === AppState.AGENT_PROCESSING && (
+                    <div className="p-12 flex-1 flex flex-col justify-center animate-in fade-in duration-1000">
+                      <AgentUI isProcessing={isProcessing} reasoning={aiReasoning} decisionText={decision?.reasoning || ""} riskScore={decision?.riskScore || 0} />
+                      {!isProcessing && (
+                        <button onClick={() => setState(AppState.QUOTE)} className="mt-12 mx-auto px-12 py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-black transition-all flex items-center gap-3">
+                          View Underwritten Terms <ArrowUpRight className="w-5 h-5" />
+                        </button>
                       )}
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {state === AppState.AGENT_PROCESSING && (
-                <div className="p-12 flex-1 flex flex-col justify-center animate-in fade-in duration-1000">
-                  <AgentUI isProcessing={isProcessing} reasoning={aiReasoning} decisionText={decision?.reasoning || ""} riskScore={decision?.riskScore || 0} />
-                  {!isProcessing && (
-                    <button onClick={() => setState(AppState.QUOTE)} className="mt-12 mx-auto px-12 py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-black transition-all flex items-center gap-3">
-                      View Underwritten Terms <ArrowUpRight className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {state === AppState.QUOTE && decision && (
-                <div className="p-12 flex-1 flex flex-col space-y-12 animate-in zoom-in duration-500 relative">
-                  {showModifyMenu && (
-                    <div className="absolute inset-0 z-[200] bg-white p-12 overflow-y-auto animate-in fade-in slide-in-from-bottom-12 duration-700">
-                      <div className="flex items-center justify-between mb-12">
-                        <h3 className="text-3xl font-black text-[#B11226] uppercase tracking-tighter">Modification Panel</h3>
-                        <button onClick={() => setShowModifyMenu(false)} className="w-12 h-12 flex items-center justify-center bg-black/5 rounded-2xl"><ChevronLeft className="w-6 h-6" /></button>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        <div className="space-y-3">
-                          <p className="text-[10px] font-black uppercase text-slate-400">Demographics</p>
-                          {demographicSteps.map((step) => (
-                            <button key={step.key} onClick={() => handleJumpToQuestion(INTERVIEW_STEPS.indexOf(step))} className="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-xl hover:border-[#B11226] transition-all text-xs font-bold">{step.label} <Edit3 className="w-3 h-3 text-slate-300" /></button>
-                          ))}
-                        </div>
-                        <div className="space-y-3">
-                          <p className="text-[10px] font-black uppercase text-slate-400">Metabolic Profile</p>
-                          {lifestyleSteps.map((step) => (
-                            <button key={step.key} onClick={() => handleJumpToQuestion(INTERVIEW_STEPS.indexOf(step))} className="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-xl hover:border-[#B11226] transition-all text-xs font-bold">{step.label} <Edit3 className="w-3 h-3 text-slate-300" /></button>
-                          ))}
-                        </div>
-                        <div className="space-y-3">
-                          <p className="text-[10px] font-black uppercase text-slate-400">Medical Data</p>
-                          {medicalSteps.map((step) => (
-                            <button key={step.key} onClick={() => handleJumpToQuestion(INTERVIEW_STEPS.indexOf(step))} className="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-xl hover:border-[#B11226] transition-all text-xs font-bold">{step.label} <Edit3 className="w-3 h-3 text-slate-300" /></button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
                   )}
 
-                  <div className="flex flex-col md:flex-row gap-12 items-center">
-                    <div className="flex-1 text-left space-y-4">
-                      <span className="px-3 py-1 bg-[#B11226] text-white rounded-full text-[9px] font-black uppercase tracking-widest">OFFER_FINAL_CL</span>
-                      <h2 className="text-4xl font-black uppercase tracking-tighter leading-none">Your Underwritten Terms</h2>
-                      <p className="text-black/60">Calculated via multi-agent neural consensus based on your biometric profile and lifestyle disclosures.</p>
-                    </div>
-                    <div className="w-full md:w-[320px] bg-[#B11226] p-10 rounded-[2.5rem] text-white shadow-2xl">
-                       <p className="text-[10px] font-black uppercase opacity-60">Monthly Premium</p>
-                       <div className="flex items-baseline gap-2 mt-2">
-                         <span className="text-3xl font-bold opacity-40">$</span>
-                         <span className="text-7xl font-black tracking-tighter">{decision.adjustedPremium.toFixed(2)}</span>
-                       </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <div className="bg-[#B11226]/5 p-8 rounded-3xl border border-[#B11226]/10">
-                        <h4 className="text-[10px] font-black uppercase mb-6 text-[#B11226]">Consensus Multipliers</h4>
-                        <div className="space-y-3">
-                           {Object.entries(decision.multipliers).map(([k, v]) => (
-                             <div key={k} className="flex justify-between text-xs font-bold py-2 border-b border-black/5"><span>{k}</span><span className="text-[#B11226]">x{(v as number).toFixed(2)}</span></div>
-                           ))}
-                        </div>
-                     </div>
-                     <div className="flex flex-col gap-4 justify-center">
-                        <button onClick={handlePaymentTransition} className="w-full py-6 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all">Accept Offer & Bind Policy</button>
-                        <button onClick={() => setShowModifyMenu(true)} className="w-full py-5 bg-slate-100 rounded-2xl font-black uppercase text-[10px] tracking-widest">Modify Records</button>
-                     </div>
-                  </div>
-                </div>
-              )}
-
-              {state === AppState.PAYMENT && (
-                <div className="flex-1 flex flex-col items-center justify-center p-12">
-                  <PaymentGateway amount={decision?.adjustedPremium || 0} isProcessing={isIssuing} onPay={handlePolicyIssuance} />
-                </div>
-              )}
-
-              {state === AppState.ISSUANCE && (
-                <div className="p-16 text-center space-y-12 animate-in zoom-in duration-1000">
-                  <div className="w-32 h-32 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce">
-                    <CheckCircle className="w-14 h-14 text-white" />
-                  </div>
-                  <h2 className="text-5xl font-black uppercase tracking-tighter">Policy Bound</h2>
-                  <div className="bg-slate-50 border border-black/5 p-10 rounded-[2.5rem] max-w-sm mx-auto shadow-sm">
-                    <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Policy Identifier</p>
-                    <h3 className="text-2xl font-black tracking-tight mb-8">#{policyId}</h3>
-                    <button onClick={downloadPolicyPDF} className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-[#B11226] transition-all">
-                      <Download className="w-5 h-5" /> Download Quote Copy
-                    </button>
-                    <button onClick={clearAllState} className="mt-6 text-[9px] font-black uppercase tracking-widest text-black/40 hover:text-[#B11226]">Initiate New Session</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* --- CLAIM WORKFLOW --- */}
-        {currentView === 'CLAIM' && (
-          <div className="animate-in fade-in duration-700">
-             <div className="bg-white rounded-[2.5rem] shadow-xl border border-black/5 flex flex-col min-h-[600px] overflow-hidden">
-                <div className="bg-slate-50 px-8 py-3 border-b border-black/5 flex justify-between">
-                    <span className="text-[10px] font-black uppercase text-slate-400">Claims Intelligence Engine</span>
-                    <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#B11226] rounded-full animate-pulse" /><span className="text-[9px] font-bold uppercase">Ready</span></div>
-                </div>
-                
-                <div ref={scrollRef} className="flex-1 p-8 overflow-y-auto space-y-6 bg-slate-50/20">
-                  {claimMessages.map(m => {
-                    const isHandover = m.text.includes('PROTOCOL: HANDOVER');
-                    if (isHandover) {
-                      return (
-                        <div key={m.id} className="flex justify-center my-6 animate-in fade-in zoom-in duration-500">
-                          <div className="flex items-center gap-3 px-6 py-2.5 bg-black border border-white/10 rounded-full text-[9px] font-black text-white tracking-[0.15em] uppercase shadow-2xl">
-                            <RefreshCw className="w-3 h-3 animate-spin text-red-500" />
-                            {m.text.split('PROTOCOL: HANDOVER ')[1]}
+                  {state === AppState.QUOTE && decision && (
+                    <div className="p-12 flex-1 flex flex-col space-y-12 animate-in zoom-in duration-500 relative">
+                      {showModifyMenu && (
+                        <div className="absolute inset-0 z-[200] bg-white p-12 overflow-y-auto animate-in fade-in slide-in-from-bottom-12 duration-700">
+                          <div className="flex items-center justify-between mb-12">
+                            <h3 className="text-3xl font-black text-[#B11226] uppercase tracking-tighter">Modification Panel</h3>
+                            <button onClick={() => setShowModifyMenu(false)} className="w-12 h-12 flex items-center justify-center bg-black/5 rounded-2xl"><ChevronLeft className="w-6 h-6" /></button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                            <div className="space-y-3">
+                              <p className="text-[10px] font-black uppercase text-slate-400">Demographics</p>
+                              {demographicSteps.map((step) => (
+                                <button key={step.key} onClick={() => handleJumpToQuestion(INTERVIEW_STEPS.indexOf(step))} className="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-xl hover:border-[#B11226] transition-all text-xs font-bold">{step.label} <Edit3 className="w-3 h-3 text-slate-300" /></button>
+                              ))}
+                            </div>
+                            <div className="space-y-3">
+                              <p className="text-[10px] font-black uppercase text-slate-400">Metabolic Profile</p>
+                              {lifestyleSteps.map((step) => (
+                                <button key={step.key} onClick={() => handleJumpToQuestion(INTERVIEW_STEPS.indexOf(step))} className="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-xl hover:border-[#B11226] transition-all text-xs font-bold">{step.label} <Edit3 className="w-3 h-3 text-slate-300" /></button>
+                              ))}
+                            </div>
+                            <div className="space-y-3">
+                              <p className="text-[10px] font-black uppercase text-slate-400">Medical Data</p>
+                              {medicalSteps.map((step) => (
+                                <button key={step.key} onClick={() => handleJumpToQuestion(INTERVIEW_STEPS.indexOf(step))} className="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-xl hover:border-[#B11226] transition-all text-xs font-bold">{step.label} <Edit3 className="w-3 h-3 text-slate-300" /></button>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      );
-                    }
-                    return (
-                      <div key={m.id} className={`flex ${m.role === 'agent' ? 'justify-start' : 'justify-end'} animate-in slide-in-from-bottom-2`}>
-                          <div className={`max-w-[75%] flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm ${m.role === 'agent' ? AGENT_REGISTRY[m.agentName || claimActiveAgent]?.color : 'bg-[#B11226]'}`}>
-                                {m.role === 'agent' ? AGENT_REGISTRY[m.agentName || claimActiveAgent]?.icon : <User className="w-5 h-5" />}
-                              </div>
-                              <div className={`p-5 rounded-2xl text-[13px] font-medium leading-relaxed whitespace-pre-wrap ${m.role === 'agent' ? 'bg-white text-black rounded-tl-none border border-black/5 shadow-sm' : 'bg-[#B11226] text-white rounded-tr-none shadow-lg'}`}>
-                                {m.text}
-                              </div>
+                      )}
+
+                      <div className="flex flex-col md:flex-row gap-12 items-center">
+                        <div className="flex-1 text-left space-y-4">
+                          <span className="px-3 py-1 bg-[#B11226] text-white rounded-full text-[9px] font-black uppercase tracking-widest">OFFER_FINAL_CL</span>
+                          <h2 className="text-4xl font-black uppercase tracking-tighter leading-none">Your Underwritten Terms</h2>
+                          <p className="text-black/60">Calculated via multi-agent neural consensus based on your biometric profile and lifestyle disclosures.</p>
+                        </div>
+                        <div className="w-full md:w-[320px] bg-[#B11226] p-10 rounded-[2.5rem] text-white shadow-2xl">
+                          <p className="text-[10px] font-black uppercase opacity-60">Monthly Premium</p>
+                          <div className="flex items-baseline gap-2 mt-2">
+                            <span className="text-3xl font-bold opacity-40">$</span>
+                            <span className="text-7xl font-black tracking-tighter">{decision.adjustedPremium.toFixed(2)}</span>
                           </div>
+                        </div>
                       </div>
-                    );
-                  })}
-                  
-                  {claimIsProcessing && <div className="flex items-center gap-3 text-[#B11226] text-[10px] font-black uppercase tracking-widest ml-14 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> {claimActiveAgent} is processing records...</div>}
-                  {claimId && !claimIsProcessing && <div className="ml-14 p-6 bg-emerald-50 border border-emerald-200 rounded-3xl"><h3 className="text-xl font-black text-emerald-900 uppercase">Tracking ID: {claimId}</h3><p className="text-[10px] font-bold text-emerald-700 uppercase mt-1">Status: Document Verified & Payout Authorized</p></div>}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-[#B11226]/5 p-8 rounded-3xl border border-[#B11226]/10">
+                            <h4 className="text-[10px] font-black uppercase mb-6 text-[#B11226]">Consensus Multipliers</h4>
+                            <div className="space-y-3">
+                              {Object.entries(decision.multipliers).map(([k, v]) => (
+                                <div key={k} className="flex justify-between text-xs font-bold py-2 border-b border-black/5"><span>{k}</span><span className="text-[#B11226]">x{(v as number).toFixed(2)}</span></div>
+                              ))}
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-4 justify-center">
+                            <button onClick={handlePaymentTransition} className="w-full py-6 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all">Accept Offer & Bind Policy</button>
+                            <button onClick={() => setShowModifyMenu(true)} className="w-full py-5 bg-slate-100 rounded-2xl font-black uppercase text-[10px] tracking-widest">Modify Records</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {state === AppState.PAYMENT && (
+                    <div className="flex-1 flex flex-col items-center justify-center p-12">
+                      <PaymentGateway amount={decision?.adjustedPremium || 0} isProcessing={isIssuing} onPay={handlePolicyIssuance} />
+                    </div>
+                  )}
+
+                  {state === AppState.ISSUANCE && (
+                    <div className="p-16 text-center space-y-12 animate-in zoom-in duration-1000">
+                      <div className="w-32 h-32 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce">
+                        <CheckCircle className="w-14 h-14 text-white" />
+                      </div>
+                      <h2 className="text-5xl font-black uppercase tracking-tighter">Policy Bound</h2>
+                      <div className="bg-slate-50 border border-black/5 p-10 rounded-[2.5rem] max-w-sm mx-auto shadow-sm">
+                        <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Policy Identifier</p>
+                        <h3 className="text-2xl font-black tracking-tight mb-8">#{policyId}</h3>
+                        <button onClick={downloadPolicyPDF} className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-[#B11226] transition-all">
+                          <Download className="w-5 h-5" /> Download Policy Copy
+                        </button>
+                        <button onClick={clearAllState} className="mt-6 text-[9px] font-black uppercase tracking-widest text-black/40 hover:text-[#B11226]">Initiate New Session</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
+              </div>
+            )}
 
-                <div className="p-8 bg-white border-t border-black/5">
-                    <div className="max-w-2xl mx-auto">
-                        {claimState === ClaimAppState.INTRO && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <button 
-                                    onClick={handleStatusCheck}
-                                    className="p-6 bg-white border-2 border-black/5 rounded-[1.5rem] flex flex-col items-center gap-3 hover:border-[#B11226] transition-all group"
-                                >
-                                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 group-hover:bg-[#B11226] group-hover:text-white transition-colors">
-                                        <SearchCheck className="w-6 h-6" />
-                                    </div>
-                                    <span className="font-black uppercase text-xs tracking-widest">Claim Status Check</span>
-                                </button>
-                                <button 
-                                    onClick={handleInitiateClaim}
-                                    className="p-6 bg-white border-2 border-black/5 rounded-[1.5rem] flex flex-col items-center gap-3 hover:border-[#B11226] transition-all group"
-                                >
-                                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 group-hover:bg-[#B11226] group-hover:text-white transition-colors">
-                                        <Plus className="w-6 h-6" />
-                                    </div>
-                                    <span className="font-black uppercase text-xs tracking-widest">Initiate Claim</span>
-                                </button>
+            {/* --- CLAIM WORKFLOW --- */}
+            {currentView === 'CLAIM' && (
+              <div className="animate-in fade-in duration-700 min-h-full">
+                <div className="bg-white rounded-[2.5rem] shadow-xl border border-black/5 flex flex-col min-h-[600px] overflow-hidden">
+                    <div className="bg-slate-50 px-8 py-3 border-b border-black/5 flex justify-between">
+                        <span className="text-[10px] font-black uppercase text-slate-400">Claims Intelligence Engine</span>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#B11226] rounded-full animate-pulse" /><span className="text-[9px] font-bold uppercase">Ready</span></div>
+                    </div>
+                    
+                    <div ref={scrollRef} className="flex-1 p-8 overflow-y-auto space-y-6 bg-slate-50/20">
+                      {claimMessages.map(m => {
+                        const isHandover = m.text.includes('PROTOCOL: HANDOVER');
+                        if (isHandover) {
+                          return (
+                            <div key={m.id} className="flex justify-center my-6 animate-in fade-in zoom-in duration-500">
+                              <div className="flex items-center gap-3 px-6 py-2.5 bg-black border border-white/10 rounded-full text-[9px] font-black text-white tracking-[0.15em] uppercase shadow-2xl">
+                                <RefreshCw className="w-3 h-3 animate-spin text-red-500" />
+                                {m.text.split('PROTOCOL: HANDOVER ')[1]}
+                              </div>
                             </div>
-                        )}
-
-                        {claimState === ClaimAppState.INTAKE && !claimIsProcessing && (
-                            <div className="w-full">
-                                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".pdf" />
-                                <button onClick={() => fileInputRef.current?.click()} className="w-full p-10 border-2 border-dashed rounded-[2rem] border-[#B11226]/20 hover:bg-[#B11226]/5 transition-all flex flex-col items-center gap-4 group">
-                                    <div className="w-16 h-16 bg-[#B11226] rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:rotate-6 transition-transform"><Upload className="w-8 h-8" /></div>
-                                    <p className="font-black uppercase text-sm tracking-tight">Upload Claim Package (PDF)</p>
-                                    <p className="text-xs text-black/40 font-bold uppercase">Multi-modal Intelligent Processing</p>
-                                </button>
-                            </div>
-                        )}
-
-                        {claimId && !claimIsProcessing && (
-                          <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <button 
-                                onClick={clearAllState}
-                                className="w-full py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-black transition-all flex items-center justify-center gap-3"
-                            >
-                                <RefreshCw className="w-5 h-5" /> Process Another Claim
-                            </button>
+                          );
+                        }
+                        return (
+                          <div key={m.id} className={`flex ${m.role === 'agent' ? 'justify-start' : 'justify-end'} animate-in slide-in-from-bottom-2`}>
+                              <div className={`max-w-[75%] flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm ${m.role === 'agent' ? AGENT_REGISTRY[m.agentName || claimActiveAgent]?.color : 'bg-[#B11226]'}`}>
+                                    {m.role === 'agent' ? AGENT_REGISTRY[m.agentName || claimActiveAgent]?.icon : <User className="w-5 h-5" />}
+                                  </div>
+                                  <div className={`p-5 rounded-2xl text-[13px] font-medium leading-relaxed whitespace-pre-wrap ${m.role === 'agent' ? 'bg-white text-black rounded-tl-none border border-black/5 shadow-sm' : 'bg-[#B11226] text-white rounded-tr-none shadow-lg'}`}>
+                                    {m.text}
+                                  </div>
+                              </div>
                           </div>
-                        )}
+                        );
+                      })}
+                      
+                      {claimIsProcessing && <div className="flex items-center gap-3 text-[#B11226] text-[10px] font-black uppercase tracking-widest ml-14 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> {claimActiveAgent} is processing records...</div>}
+                      {claimId && !claimIsProcessing && <div className="ml-14 p-6 bg-emerald-50 border border-emerald-200 rounded-3xl"><h3 className="text-xl font-black text-emerald-900 uppercase">Tracking ID: {claimId}</h3><p className="text-[10px] font-bold text-emerald-700 uppercase mt-1">Status: Document Verified & Payout Authorized</p></div>}
+                    </div>
+
+                    <div className="p-8 bg-white border-t border-black/5">
+                        <div className="max-w-2xl mx-auto">
+                            {claimState === ClaimAppState.INTRO && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <button 
+                                        onClick={handleStatusCheck}
+                                        className="p-6 bg-white border-2 border-black/5 rounded-[1.5rem] flex flex-col items-center gap-3 hover:border-[#B11226] transition-all group"
+                                    >
+                                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 group-hover:bg-[#B11226] group-hover:text-white transition-colors">
+                                            <SearchCheck className="w-6 h-6" />
+                                        </div>
+                                        <span className="font-black uppercase text-xs tracking-widest">Claim Status Check</span>
+                                    </button>
+                                    <button 
+                                        onClick={handleInitiateClaim}
+                                        className="p-6 bg-white border-2 border-black/5 rounded-[1.5rem] flex flex-col items-center gap-3 hover:border-[#B11226] transition-all group"
+                                    >
+                                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 group-hover:bg-[#B11226] group-hover:text-white transition-colors">
+                                            <Plus className="w-6 h-6" />
+                                        </div>
+                                        <span className="font-black uppercase text-xs tracking-widest">Initiate Claim</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            {claimState === ClaimAppState.INTAKE && !claimIsProcessing && (
+                                <div className="w-full">
+                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".pdf" />
+                                    <button onClick={() => fileInputRef.current?.click()} className="w-full p-10 border-2 border-dashed rounded-[2rem] border-[#B11226]/20 hover:bg-[#B11226]/5 transition-all flex flex-col items-center gap-4 group">
+                                        <div className="w-16 h-16 bg-[#B11226] rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:rotate-6 transition-transform"><Upload className="w-8 h-8" /></div>
+                                        <p className="font-black uppercase text-sm tracking-tight">Upload Claim Package (PDF)</p>
+                                        <p className="text-xs text-black/40 font-bold uppercase">Multi-modal Intelligent Processing</p>
+                                    </button>
+                                </div>
+                            )}
+
+                            {claimId && !claimIsProcessing && (
+                              <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <button 
+                                    onClick={clearAllState}
+                                    className="w-full py-5 bg-[#B11226] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-black transition-all flex items-center justify-center gap-3"
+                                >
+                                    <RefreshCw className="w-5 h-5" /> Process Another Claim
+                                </button>
+                              </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-             </div>
+              </div>
+            )}
           </div>
         )}
       </main>
 
-      <footer className="py-12 bg-slate-900 text-white/40 text-[10px] font-bold uppercase tracking-widest text-center">
-        &copy; 2024 Canada Life Strategic Partnership // Node CL-NODE-AUTH-SEC
-      </footer>
+      {/* integrated footer/status on dashboard, standard footer elsewhere */}
+      {currentView !== 'DASHBOARD' && (
+        <footer className="py-6 bg-slate-900 text-white/40 text-[10px] font-bold uppercase tracking-widest text-center shrink-0">
+          &copy; 2024 Canada Life Strategic Partnership // Node CL-NODE-AUTH-SEC
+        </footer>
+      )}
     </div>
   );
 };
